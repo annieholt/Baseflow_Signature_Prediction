@@ -35,12 +35,12 @@ def run_tossh(tossh_path):
 
     return output
 
+
 # function to load/generate data, and then extract into dataframes for analyses
 # requires paths, for pickle file storing outputs and for tossh toolbox repo
 
 # returns dataframe, for now just 5 recommended signatures, can later do all 15??
 def get_sig_df(tossh_path, pi_path):
-
     # create empty object for tossh results
     tossh_results = None
 
@@ -82,28 +82,31 @@ def get_sig_df(tossh_path, pi_path):
     sig_df_final['gauge_id'] = sig_df_final['gauge_id'].astype(int).astype(str).str.zfill(8)
     print(sig_df_final.dtypes)
 
-    # no StorageFraction, RecessionParameters for now, didn't deal with the formatting
-    sig_df_2 = sig_df_final[["gauge_id", "gauge_lat", "gauge_lon", "TotalRR", "EventRR", "RR_Seasonality",
-                             "Recession_a_Seasonality",
-                             "AverageStorage", "MRC_num_segments", "BFI", "BaseflowRecessionK",
-                             "First_Recession_Slope", "Mid_Recession_Slope", "Spearmans_rho", "EventRR_TotalRR_ratio",
-                             "VariabilityIndex"]]
+    # format the StorageFraction and Recession Parameters
+    # basically take them out of their list storage format
+    recession_df = pd.DataFrame(sig_df_final['RecessionParameters'].to_list(), columns=['RecessionParameters'])
+    recession_df_2 = pd.DataFrame(recession_df['RecessionParameters'].to_list(), columns=['RecessionParameters_a',
+                                                                                          'RecessionParameters_b',
+                                                                                          'RecessionParameters_c'])
+
+    storage_df = pd.DataFrame(sig_df_final['StorageFraction'].to_list(), columns=['StorageFraction'])
+    storage_df_2 = pd.DataFrame(storage_df['StorageFraction'].to_list(), columns=['StorageFraction_fraction',
+                                                                                  'StorageFraction_active',
+                                                                                  'StorageFraction_total'])
+    sig_df_final_2 = pd.concat([sig_df_final, recession_df_2, storage_df_2], axis=1)
+
+    # don't include error information, for now
+    # order: groundwater, storage, baseflow
+    sig_df_final_3 = sig_df_final_2[["gauge_id", "gauge_lat", "gauge_lon", "TotalRR", "EventRR", "RR_Seasonality",
+                                     "StorageFraction_fraction", "StorageFraction_active", "StorageFraction_total",
+                                     "RecessionParameters_a", "RecessionParameters_b", "RecessionParameters_c",
+                                     "AverageStorage", "Recession_a_Seasonality", "MRC_num_segments",
+                                     "First_Recession_Slope", "Mid_Recession_Slope", "Spearmans_rho",
+                                     "EventRR_TotalRR_ratio", "VariabilityIndex", "BFI", "BaseflowRecessionK"]]
 
     # select 5 most recommended signatures by McMillan et al., 2022
     # Total RR, Average Storage, Recession a seasonality, BFI, Baseflow Recession K
     # sig_df_2 = sig_df_final[["TotalRR", "Recession_a_Seasonality", "AverageStorage", "BFI", "BaseflowRecessionK"]]
     # print(sig_df_2)
 
-    return sig_df_2
-
-
-
-
-# note that some sigs have multiple output values:
-# Storage fraction: S_fraction: ratio between active and total storage capacity [-]
-# %   S_active: active storage capacity [mm]
-# %   S_total: total storage capacity [mm]
-
-# Recession Parameters
-# matrix with parameters alpha, beta (=1 for
-# %       exponential fit) for each recession segment
+    return sig_df_final_3

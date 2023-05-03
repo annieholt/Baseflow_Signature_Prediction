@@ -8,64 +8,180 @@ import statsmodels
 import pandas
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import calinski_harabasz_score
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import plotly.express as px
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-# import data
-pi_path = 'C:/Users/holta/Documents/Repositories/baseflow_prediction/signatures/camels_gw_sigs_pi.obj'
-tossh_path = 'C:/Users/holta/Documents/Repositories/TOSSH'
-sig_df = get_sig_df(tossh_path, pi_path)
-nan_count = sig_df.isna().sum()
-print(nan_count)
 
-sig_df_drop = sig_df[["TotalRR", "EventRR", "RR_Seasonality","Recession_a_Seasonality","AverageStorage",
-                      "MRC_num_segments", "BFI", "BaseflowRecessionK","First_Recession_Slope",
-                      "Mid_Recession_Slope", "Spearmans_rho", "EventRR_TotalRR_ratio", "VariabilityIndex"]].dropna()
+def run_pca(sig_df, thresh_type, thresh_value, return_type):
+    """
+    :param sig_df: dataframe of signatures (no extra variables, no NAs)
+    :param thresh_type: threshold for choosing the number of principal components ('eigen' or 'variance')
+    :param thresh_value: threshold value (either eigen value threshold, or ratio of variance explained)
+    :param return_type: either return dataframe of components, or pca model ('dataframe' or 'model)
+    :return: pca model or dataframe
+    """
 
-# Mid_Recession_Slope  and Variability Index have several NAS
+    # run PCA on signatures
+    if thresh_type == 'variance':
+        # set up PCA
+        pca = PCA(n_components=thresh_value, svd_solver="full")
+        # prepare/standardize the signature data
+        standardized_df = StandardScaler().fit_transform(sig_df)
+        # Calculate the components, standardized data as input
+        principal_components = pca.fit_transform(np.array(standardized_df))
+        # make  it a dataframe again, with more names
+        principal_df = pd.DataFrame(data=principal_components, index=sig_df.index)
+        principal_df.columns = ["PC " + str(i) for i in range(1, len(principal_df.columns) + 1)]
+
+        if return_type == 'model':
+            return pca
+        elif return_type == 'dataframe':
+            return principal_df
+        else:
+            return pca
+
+    elif thresh_type == 'eigen':
+        # use n_components = None to start with the max number of components
+        # set up PCA
+        pca = PCA(n_components=None, svd_solver="full")
+        # prepare/standardize the signature data
+        standardized_df = StandardScaler().fit_transform(sig_df)
+        # fit the model with data and apply the dimensionality reduction on data
+        pca.fit_transform(np.array(standardized_df))
+
+        # look at explained variance to select number of components, based on eigen value threshold
+        # first create dataframe of explained variance, with index being the component
+        e_var_df = pd.DataFrame(pca.explained_variance_, columns=["ExplainedVarience"])
+        # then filter dataframe based one explained variance that is greater than the eigen value threshold
+        e_var_df_filter = e_var_df.loc[(e_var_df['ExplainedVarience'] > thresh_value)]
+        # select number of components
+        n_components = len(e_var_df_filter.index)
+
+        # then rerun pca based on determined number of components
+        pca_2 = PCA(n_components=n_components, svd_solver="full")
+        # Calculate the components, standardized data from above as input
+        principal_components = pca_2.fit_transform(np.array(standardized_df))
+
+        # Make it a dataframe again, with more names
+        principal_df = pd.DataFrame(data=principal_components, index=sig_df.index)
+        principal_df.columns = ["PC " + str(i) for i in range(1, len(principal_df.columns) + 1)]
+
+        if return_type == 'model':
+            return pca_2
+        elif return_type == 'dataframe':
+            return principal_df
 
 
-# reduce to the five recommended signatures
-sig_df_5 = sig_df[["TotalRR", "Recession_a_Seasonality", "AverageStorage", "BFI", "BaseflowRecessionK"]]
-# Count the NaN values in multiple rows, don't want nas
-# nan_count = sig_df_5.isna().sum()
-# print(nan_count)
+def plot_pca_explained_variance(pca_model, out_path):
+    """
+    code based on following source :
+    https://towardsdatascience.com/how-to-select-the-best-number-of-principal-components-for-the-dataset-287e64b14c6d'
+
+    :param pca_model: PCA model object, resulting from run_pca() function
+    :param out_path: path for saving the generated figure
+    :return: None
+    """
+    # prepare x and y data for boxplot
+    exp_var = pca_model.explained_variance_ratio_ * 100
+    cum_exp_var = np.cumsum(exp_var)
+
+    # determine number of components
+    num = len(exp_var)
+    print(num)
+
+    plt.bar(range(1, num + 1), exp_var, align='center',
+            label='Individual explained variance')
+    plt.step(range(1, num + 1), cum_exp_var, where='mid',
+             label='Cumulative explained variance', color='red')
+    plt.ylabel('Explained variance percentage')
+    plt.xlabel('Principal component index')
+
+    ticks = range(1, num + 1)
+    plt.xticks(ticks=ticks)
+    plt.legend(loc='best')
+    plt.tight_layout()
+
+    out_name = "/pca_boxplot_variance_explained.png"
+    out_full = out_path + out_name
+    plt.savefig(out_full)
+    # plt.show()
 
 
-# PCA on signatures
+def create_cluster_labels(sig_df, num_groups, return_score=False):
+    """
+    run clustering analysis, returns cluster labels for each datapoint
+    based on code from Jehn et al., 2020
+    """
+    np.random.seed(0)
+    # set up cluster model, ward method
+    agg_clust = AgglomerativeClustering(n_clusters=num_groups, linkage="ward")
+    # prepare/standarize input data
+    sig_df_2 = sig_df.copy(deep=True)
+    sig_df_2 = StandardScaler().fit_transform(sig_df_2)
+    # fit model to data
+    agg_clust.fit(sig_df_2)
+    # extract
+    labels = pd.DataFrame(list(agg_clust.labels_))
+    labels.index = sig_df.index
+    labels.columns = ["Cluster"]
 
-# set variance to be explained??
-variance = 0.9
-
-pca = PCA(n_components=variance, svd_solver="full")
-standardized_df = StandardScaler().fit_transform(sig_df_drop)
-
-# Calculate the components
-principal_components = pca.fit_transform(np.array(standardized_df))
-print("Explained variance of the components (sorted in ascending order):")
-print(pca.explained_variance_ratio_)
-
-# Make it a dataframe again
-principal_df = pd.DataFrame(data=principal_components, index=sig_df_drop.index)
-# Give the columns more meaningful names
-principal_df.columns = ["PC " + str(i) for i in range(1, len(principal_df.columns) + 1)]
-print(principal_df)
+    if return_score:
+        return agg_clust.connectivity
+    else:
+        return labels
 
 
-# look at components during debugging (pca, components), see influence of each variable to the components
+def elbow(sig_df, min_clusters, max_clusters):
+    """
+    creates elbow plot to determine number of clusters
+    :param sig_df: input dataframe of signatures, prepped by pca
+    :param min_clusters: minimum number of clusters (2 or greater)
+    :param max_clusters: maximum number of clusters
+    :return: None
+    """
+    score_dict = {}
+    for num_clusters in range(min_clusters, max_clusters + 1):
+        labels = create_cluster_labels(sig_df, num_clusters)
+        score_dict[num_clusters] = calinski_harabasz_score(sig_df, labels)
+    metrics = pd.DataFrame.from_dict(score_dict, orient="index")
+    print(metrics)
+    metrics.plot(legend=None)
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('Variance Ratio Criterion')
+    plt.show()
 
-# visualize
 
-total_var = pca.explained_variance_ratio_.sum() * 100
+def clusters_to_loc(gauge_df, cluster_df):
+    """
+    Aligns cluster labels to gauge location data for future mapping
+    :param gauge_df: dataframe of gauge information (latitude/longitude/id)
+    :param cluster_df: dataframe of points with their associated clusters
+    :return: dataframe of gaugeid/lat/long/cluster label
+    """
 
-fig = px.scatter_3d(
-    principal_components, x=0, y=1, z=2,
-    title=f'Total Explained Variance: {total_var:.2f}%',
-    labels={'0': 'PC 1', '1': 'PC 2', '2': 'PC 3'}
-)
-fig.show()
+    merge_df = pd.merge(gauge_df, cluster_df, left_index=True, right_index=True)
 
+    return merge_df
+
+
+
+
+
+# # visualize
+#
+# total_var = pca.explained_variance_ratio_.sum() * 100
+#
+# fig = px.scatter_3d(
+#     principal_components, x=0, y=1, z=2,
+#     title=f'Total Explained Variance: {total_var:.2f}%',
+#     labels={'0': 'PC 1', '1': 'PC 2', '2': 'PC 3'}
+# )
+# fig.show()
 
 
 # features = ["TotalRR", "Recession_a_Seasonality", "AverageStorage", "BFI", "BaseflowRecessionK"]
@@ -96,9 +212,6 @@ fig.show()
 # fig.show()
 
 
-
-
-
 # # import libraries
 # import matplotlib.pyplot as plt
 # import seaborn as sns
@@ -112,7 +225,6 @@ fig.show()
 # sns.heatmap(sig_df.corr(), annot=True, mask=mask, vmin=-1, vmax=1, cmap='Blues')
 # plt.title('Correlation Coefficient Of Predictors')
 # plt.show()
-
 
 
 # Variance Inflation Factor (VIF)
@@ -144,4 +256,3 @@ fig.show()
 
 # PCA to create less correlated dataset (doesn't reduce the data, just weights?)
 # use those groups, run clustering analysis on groups
-
