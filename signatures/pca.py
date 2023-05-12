@@ -34,7 +34,7 @@ def run_pca(sig_df, thresh_type, thresh_value, return_type):
         standardized_df = StandardScaler().fit_transform(sig_df)
         # Calculate the components, standardized data as input
         principal_components = pca.fit_transform(np.array(standardized_df))
-        # make  it a dataframe again, with more names
+        # Extract into datdaframe for future clustering
         principal_df = pd.DataFrame(data=principal_components, index=sig_df.index)
         principal_df.columns = ["PC " + str(i) for i in range(1, len(principal_df.columns) + 1)]
 
@@ -120,12 +120,12 @@ def create_cluster_labels(sig_df, num_groups, return_score=False):
     np.random.seed(0)
     # set up cluster model, ward method
     agg_clust = AgglomerativeClustering(n_clusters=num_groups, linkage="ward")
-    # prepare/standarize input data
+    # prepare input data
     sig_df_2 = sig_df.copy(deep=True)
     sig_df_2 = StandardScaler().fit_transform(sig_df_2)
     # fit model to data
     agg_clust.fit(sig_df_2)
-    # extract
+    # extract cluster labels
     labels = pd.DataFrame(list(agg_clust.labels_))
     labels.index = sig_df.index
     labels.columns = ["Cluster"]

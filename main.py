@@ -28,6 +28,7 @@ sigs_3 = sigs_2[["TotalRR", "EventRR", "RR_Seasonality", "AverageStorage", "Rece
                  "EventRR_TotalRR_ratio", "VariabilityIndex", "BFI", "BaseflowRecessionK"]]
 
 pca = run_pca(sigs_3, 'eigen', 0.8, 'dataframe')
+# print(pca)
 # pca = run_pca(pi_path, tossh_path, 'variance', None, 'model')
 # plot_path = "D:/SDSU_GEOG/Thesis/Data/Signatures"
 # plot_pca_explained_variance(pca_model=pca, out_path=plot_path)

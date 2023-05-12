@@ -16,37 +16,32 @@ import os
 def run_tossh(tossh_path):
     # create MATLAB engine
     eng = matlab.engine.start_matlab()
-    # add paths to necessary MATLAB scripts
-    # scripts were forked from GitHub Gnann et al., 2021
-    # several scripts were updated for personal use... basically needed to feed CAMELS data into groundwater workflow
+    # add paths to necessary MATLAB scripts (forked from Gnann et al., 2021 GitHub)
+    # several MATLAB scripts were updated
     path = eng.genpath(tossh_path)
     eng.addpath(path, nargout=0)
-    # camels_data = eng.loadCAMELSstruct()
+    # calculate groundwater signature set
+    # this takes about a minute
+    output = eng.CAMELS_groundwater_2()
 
+
+    # camels_data = eng.loadCAMELSstruct()
     # results_daily = eng.CAMELS_dataprep()
     # datasets for Q, t, P, PET
     # Q_mat: streamflow [mm/timestep] matrix (cell array)
     # t_mat: time [Matlab datenum] matrix (cell array)
     # P_mat: precipitation [mm/timestep] matrix (cell array)
 
-    # calculate groundwater signature set
-    # this takes about a minute
-    output = eng.CAMELS_groundwater_2()
-
     return output
 
 
 # function to load/generate data, and then extract into dataframes for analyses
 # requires paths, for pickle file storing outputs and for tossh toolbox repo
-
-# returns dataframe, for now just 5 recommended signatures, can later do all 15??
+# returns dataframe
 def get_sig_df(tossh_path, pi_path):
     # create empty object for tossh results
     tossh_results = None
-
-    # if file doesn't exist, run tossh and assign to results
-    # otherwise import pickle file and assign to results
-
+    # if file doesn't exist, run tossh and assign to results; otherwise import pickle file and assign to results
     if not os.path.exists(pi_path):
         # run tossh function, which calls matlab tools
         tossh_results = run_tossh(tossh_path)
