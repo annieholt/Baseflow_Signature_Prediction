@@ -6,24 +6,47 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score, KFold
 
-rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/BFI_attributes_test_data.csv", header=0, index_col=0)
+
+# rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/BFI_attributes_test_data.csv", header=0, index_col=0)
+rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
 
 # removing categorical data and dropping NAs, for now
+# and just keeping BFI for now
 rf_data_2 = rf_data.drop(['gauge_id', 'low_prec_timing', 'high_prec_timing', 'geol_1st_class',
-                            'glim_1st_class_frac', 'dom_land_cover', 'dom_land_cover_frac'], axis=1)
+                          'glim_1st_class_frac', 'dom_land_cover', 'dom_land_cover_frac',
+                          'giw_frac', 'geol_major_age_ma',
+                          'TotalRR', 'EventRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
+                          'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments',
+                          'First_Recession_Slope',
+                          'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio',
+                          'VariabilityIndex', 'BaseflowRecessionK'], axis=1)
 
 rf_data_3 = rf_data_2.dropna()
+print(rf_data_3)
 
-
-X = rf_data_3.drop('baseflow_index', axis=1)
-y = rf_data_3['baseflow_index']
+X = rf_data_3.drop('BFI', axis=1)
+y = rf_data_3['BFI']
 # Split the data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.2)
 
+
+
+# testing different sizes of trees
+
+
+
 clf = RandomForestRegressor(n_estimators=100, random_state=42)
 clf.fit(X_train, y_train)
-print(f"Baseline accuracy on test data: {clf.score(X_test, y_test):.2}")
+print(f"R-squared on test data: {clf.score(X_test, y_test):.2f}")
+
+# Perform 10-fold cross-validation
+cv_scores = cross_val_score(clf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42))
+
+# Print cross-validation scores
+print(f"Cross-validation R-squared scores: {cv_scores}")
+print(f"Mean R-squared from cross-validation: {cv_scores.mean():.2f}")
 
 import matplotlib.pyplot as plt
 import numpy as np
