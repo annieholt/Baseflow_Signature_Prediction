@@ -5,6 +5,55 @@ library(randomForest)
 library(caret)
 library(rpart)
 library(rpart.plot)
+library(sf)
+
+
+#### Hydrologic Signatures ####
+
+sigs_c = read.csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels.csv', colClasses = c(gauge_id = "character"))
+
+sigs_c_2 = sigs_c %>% 
+  select(gauge_id, TotalRR, RR_Seasonality, EventRR, Recession_a_Seasonality,
+         AverageStorage, RecessionParameters_a, RecessionParameters_b, RecessionParameters_c, MRC_num_segments,
+         First_Recession_Slope, Mid_Recession_Slope, Spearmans_rho, EventRR_TotalRR_ratio,
+         VariabilityIndex, BFI, BaseflowRecessionK) %>% 
+  as.data.frame()
+
+
+#### New Attributes ####
+
+nwi_c = st_read('E:/SDSU_GEOG/Thesis/Data/NWI_outputs/Shapefiles/nwi_camels_metrics_ecoregions.shp') %>% 
+  as.data.frame() %>% 
+  select(gauge_id, shed_area, fresh, lake, other)
+
+giws = st_read('E:/SDSU_GEOG/Thesis/Data/GIWs/giws_metrics.shp') %>% 
+  as.data.frame() %>% 
+  select(gauge_id, area_frac)
+
+# age by major geologic unit
+geol_c = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Shapefiles/sgmc_camels_metrics.shp') %>% 
+  as.data.frame() %>% 
+  # select(gauge_id, av_age) %>% 
+  rename(geol_major_age_ma = av_age)
+
+# average age of catchment (age weighted by area of geologic unit type)
+geol_c_av = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Shapefiles/sgmc_camels_metrics_age_weighted.shp') %>% 
+  as.data.frame() %>% 
+  # select(gauge_id, av_age_w) %>% 
+  rename(geol_av_age_ma = av_age_w)
+
+
+new_attrib = nwi_c %>% 
+  left_join(giws, by = "gauge_id") %>% 
+  # some places have zero isolated wetlands, so replace NAs with zero since shapefiles weren't returned for those
+  mutate(giw_frac= ifelse(is.na(area_frac), 0, area_frac)) %>% 
+  mutate(non_giw_frac = fresh + lake - giw_frac) %>% 
+  left_join(geol_c, by = "gauge_id") %>% 
+  left_join(geol_c_av, by = "gauge_id") %>% 
+  select(gauge_id, giw_frac, non_giw_frac, geol_major_age_ma, geol_av_age_ma)
+
+
+#### CAMELS attributes ####
 
 camels_path = "E:/SDSU_GEOG/Thesis/Data/CAMELS/camels-20230412T1401Z"
 
@@ -28,21 +77,33 @@ camels_soil = read.table(paste(camels_path, "/camels_soil.txt", sep = ""), sep =
 # both are highly correlated with leaf area index maximum
 camels_vege = read.table(paste(camels_path, "/camels_vege.txt", sep = ""), sep = ";", header = TRUE)
 
+
+# join all together, make sure gauge_id has leading zeros
 camels_attribs = camels_topo %>% 
   select(-gauge_lat, -gauge_lon, -area_geospa_fabric) %>% 
   left_join(camels_clim, by = "gauge_id") %>% 
   left_join(camels_geol %>% select(-geol_2nd_class, -glim_2nd_class_frac), by = "gauge_id") %>% 
   left_join(camels_soil %>% select(-soil_porosity, -soil_conductivity), by = "gauge_id") %>% 
-  left_join(camels_vege %>% select(-lai_diff, -gvf_diff), by = "gauge_id")
+  left_join(camels_vege %>% select(-lai_diff, -gvf_diff), by = "gauge_id") %>% 
+  mutate(gauge_id = str_pad(string = as.numeric(gauge_id), width = 8, side = 'left', pad = 0))
 
 
 
-#### practice random forest model ####
+#### data for practicing RF modeling ####
 
 # ## Get the iris dataset
 # data("iris")
 # ## View first few rows
 # head(iris)
+
+
+rf_df_final = sigs_c_2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  left_join(camels_attribs, by = "gauge_id")
+
+# write.csv(rf_df_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv", row.names = FALSE)
+
+
 
 rf_df_1 = camels_hydro %>% 
   select(gauge_id, baseflow_index) %>% 
