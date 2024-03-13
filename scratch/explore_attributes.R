@@ -88,6 +88,28 @@ camels_attribs = camels_topo %>%
   mutate(gauge_id = str_pad(string = as.numeric(gauge_id), width = 8, side = 'left', pad = 0))
 
 
+#### CARAVAN attributes ####
+
+camels_caravan = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan/attributes/camels/attributes_caravan_camels.csv")
+
+camels_hydroatlas = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan/attributes/camels/attributes_hydroatlas_camels.csv")
+
+# add catchment area???? look at the other attribute table
+
+# seleted attributes: 
+# topography: mean elevation, average terrain slope, average stream gradient
+# landcover: forest cover extent, glacial extent (there are also land use classes, but not including for now)
+# soils: clay/silt/sand fraction in soils, organic carbon contect, karst area, soil erosion
+# geology: NA (just have lith classes, which are a lot of categories; add perm/porosity??)
+
+# climate: all caravan provides (including frac_snow!!)
+
+camels_caravan_attribs = camels_hydroatlas %>% 
+  select(gauge_id, ele_mt_smn, slp_dg_sav, sgr_dk_sav,
+         for_pc_sse, gla_pc_sse,
+         cly_pc_sav, slt_pc_sav, snd_pc_sav, soc_th_sav, kar_pc_sse, ero_kh_sav) %>% 
+  left_join(camels_caravan, by = "gauge_id") %>% 
+  mutate(gauge_id = gsub("^camels_", "", gauge_id))
 
 #### data for practicing RF modeling ####
 
@@ -103,6 +125,12 @@ rf_df_final = sigs_c_2 %>%
 
 # write.csv(rf_df_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv", row.names = FALSE)
 
+
+rf_caravan_final = camels_caravan_attribs %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  left_join(sigs_c_2, by = "gauge_id")
+
+# write.csv(rf_caravan_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_caravan_master.csv", row.names = FALSE)
 
 
 rf_df_1 = camels_hydro %>% 
