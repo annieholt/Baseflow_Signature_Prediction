@@ -10,30 +10,39 @@ from sklearn.model_selection import cross_val_score, KFold
 
 
 # rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/BFI_attributes_test_data.csv", header=0, index_col=0)
-rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
+# rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
+rf_data = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_caravan_master.csv")
 
+# for camels data
 # removing categorical data and dropping NAs, for now
 # and just keeping BFI for now
-rf_data_2 = rf_data.drop(['gauge_id', 'low_prec_timing', 'high_prec_timing', 'geol_1st_class',
-                          'glim_1st_class_frac', 'dom_land_cover', 'dom_land_cover_frac',
-                          'giw_frac', 'geol_major_age_ma',
-                          'TotalRR', 'EventRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
-                          'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments',
-                          'First_Recession_Slope',
-                          'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio',
-                          'VariabilityIndex', 'BaseflowRecessionK'], axis=1)
+# rf_data_2 = rf_data.drop(['gauge_id', 'low_prec_timing', 'high_prec_timing', 'geol_1st_class',
+#                           'glim_1st_class_frac', 'dom_land_cover', 'dom_land_cover_frac',
+#                           'non_giw_frac', 'geol_major_age_ma', 'TotalRR', 'RR_Seasonality', 'EventRR',
+#                           'Recession_a_Seasonality', 'AverageStorage',
+#                           'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c',
+#                           'MRC_num_segments', 'First_Recession_Slope', 'Mid_Recession_Slope', 'Spearmans_rho',
+#                           'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK'], axis=1)
+
+
+# for caravan data
+# removing categorical data and dropping NAs, for now
+# and just keeping BFI for now
+rf_data_2 = rf_data.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
+                          'EventRR', 'TotalRR', 'RR_Seasonality',
+                          'Recession_a_Seasonality', 'AverageStorage',
+                          'RecessionParameters_a', 'RecessionParameters_c',
+                          'MRC_num_segments', 'First_Recession_Slope', 'Mid_Recession_Slope', 'Spearmans_rho',
+                          'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK', 'BFI'], axis=1)
+
 
 rf_data_3 = rf_data_2.dropna()
-print(rf_data_3)
+# print(rf_data_3)
 
-X = rf_data_3.drop('BFI', axis=1)
-y = rf_data_3['BFI']
+X = rf_data_3.drop('RecessionParameters_b', axis=1)
+y = rf_data_3['RecessionParameters_b']
 # Split the data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.2)
-
-
-
-# testing different sizes of trees
 
 
 
