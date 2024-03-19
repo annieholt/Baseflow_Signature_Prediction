@@ -1,6 +1,6 @@
 import pandas
+import numpy
 from sklearn.inspection import permutation_importance
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score, KFold
@@ -107,32 +107,92 @@ for sig in sig_dic.keys():
 
     # mean squared error
     y_pred = rf.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
+    og_mse = mean_squared_error(y_test, y_pred)
     # print("Mean Squared Error (MSE):", mse)
 
     # store results
     rf_final_results[sig] = {'mean R-squared from cross-validation': cv_scores.mean(),
                              'R-squared on test data': rf.score(X_test, y_test),
-                             'mean squared error': mse}
+                             'mean squared error': og_mse}
 
-    # permutation importance
-    # NOTE: this is different then increase in mean squared error
-    # so later, try MSE... and decide if perturb the variable or remove it entirely
-    
-    # on test data (prob also need to check on train data to test for overfitting??)
-    var_importance = permutation_importance(rf, X_test, y_test, n_repeats=10, random_state=42)
 
-    sorted_importances_idx = var_importance.importances_mean.argsort()
-    importances = pandas.DataFrame(
-        var_importance.importances[sorted_importances_idx].T,
-        columns=X.columns[sorted_importances_idx],
-    )
-    ax = importances.plot.box(vert=False, whis=10)
-    ax.set_title("Permutation Importances (test set)")
-    ax.axvline(x=0, color="k", linestyle="--")
-    ax.set_xlabel("Decrease in accuracy score")
-    ax.figure.tight_layout()
+    # Calculate the change in MSE for each predictor variable (by removing each variable one at a time)
+    change_in_mse = []
+
+    for attrib in range(X_test.shape[1]):
+        # Permute values of attributes (instead of removing the attribute, which is how I initially approached this)
+        X_test_permuted = X_test.copy()
+
+        attrib_col = X_test_permuted.columns[attrib]
+
+        # Convert the selected column to a list, shuffle it, and assign it back to the DataFrame
+        values_list = X_test_permuted[attrib_col].tolist()
+        numpy.random.shuffle(values_list)
+        X_test_permuted[attrib_col] = values_list
+        # print(X_permuted)
+
+        # Predict with the modified dataset and compute OOB mean squared error (mse_j)
+        y_pred_permuted = rf.predict(X_test_permuted)
+        mse_perm = mean_squared_error(y_test, y_pred_permuted)
+
+        # Calculate the %IncMSE for predictor variable j
+        percent_inc_mse = ((mse_perm - og_mse) / og_mse) * 100
+        change_in_mse.append(percent_inc_mse)
+
+        # # Create a copy of the test data with the current predictor variable removed
+        # X_test_removed = X_test.drop(X_test.columns[attrib], axis=1)
+        # X_train_removed = X_train.drop(X_train.columns[attrib], axis=1)
+        #
+        # rf_removed = RandomForestRegressor(n_estimators=n_estimators, max_features=max_features, random_state=42)
+        # rf_removed.fit(X_train_removed, y_train)
+        #
+        # # Predict using the modified model
+        # y_pred_removed = rf_removed.predict(X_test_removed)
+        #
+        # # Calculate the MSE with the current predictor variable dropped
+        # mse_dropped = mean_squared_error(y_test, y_pred_removed)
+        #
+        # # Calculate the change in MSE
+        # percent_change = ((mse_dropped - og_mse) / og_mse) * 100
+        # change_in_mse.append(percent_change)
+
+
+    # Plot the change in MSE for each predictor variable
+    # print(change_in_mse)
+
+    sorted_idx = numpy.argsort(change_in_mse)
+    sorted_change_in_mse = [change_in_mse[i] for i in sorted_idx]
+    sorted_columns = X_test.columns[sorted_idx]
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(range(len(sorted_idx)), sorted_change_in_mse, align='center')
+    plt.yticks(range(len(sorted_idx)), sorted_columns)
+    plt.xlabel('Change in Mean Squared Error')
+    plt.title('Change in Mean Squared Error for Each Predictor Variable (Variable Removal)')
     plt.show()
+
+
+
+
+
+    # # permutation importance
+    # # NOTE: this is different than increase in mean squared error
+    # # so later, try MSE... and decide if perturb the variable or remove it entirely
+    #
+    # # on test data (prob also need to check on train data to test for overfitting??)
+    # var_importance = permutation_importance(rf, X_test, y_test, n_repeats=10, random_state=42)
+    #
+    # sorted_importances_idx = var_importance.importances_mean.argsort()
+    # importances = pandas.DataFrame(
+    #     var_importance.importances[sorted_importances_idx].T,
+    #     columns=X.columns[sorted_importances_idx],
+    # )
+    # ax = importances.plot.box(vert=False, whis=10)
+    # ax.set_title("Permutation Importances (test set)")
+    # ax.axvline(x=0, color="k", linestyle="--")
+    # ax.set_xlabel("Decrease in accuracy score")
+    # ax.figure.tight_layout()
+    # plt.show()
 
 
 print(rf_results)
