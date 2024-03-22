@@ -3,7 +3,7 @@ import numpy
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import cross_val_score, KFold, cross_val_predict, cross_validate
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
@@ -21,12 +21,12 @@ rf_data_df_dropna = rf_data_df.dropna()
 # keys will be hydrologic signature variable names
 # include a separate predictor dataframe
 
-sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
-            'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
-            'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
-            'BFI']
+# sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
+#             'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
+#             'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
+#             'BFI']
 
-# sig_list = ['EventRR', 'TotalRR']
+sig_list = ['EventRR', 'TotalRR']
 
 attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
@@ -56,11 +56,11 @@ for var in sig_list:
 # and a dictionary 'response_data' containing response variables for each of the 15 variables
 
 # Define parameter grid
-# param_grid = {'n_estimators': [10, 50, 100, 150, 200, 250, 500, 1000]}
+param_grid = {'n_estimators': [10, 50, 100, 150, 200, 250, 500, 1000], 'max_features': ['log2', 'sqrt']}
 # 100 trees was generally enough to maximize accuracy but minimze computation
 # (accuracy only varied about 1% with up to 1000 trees)
 # accuracy varied a bit more with max_features... so letting log2 or sqrt vary for each signature
-param_grid = {'n_estimators': [100], 'max_features': ['log2', 'sqrt']}
+# param_grid = {'n_estimators': [100], 'max_features': ['log2', 'sqrt']}
 
 # Initialize results dictionary
 rf_results = {}
@@ -70,13 +70,18 @@ for sig in sig_dic.keys():
     X = attrib_df  # Features
     y = sig_dic[sig]  # Target variable
 
-    # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # # Split the data into training and test sets
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # instead, don't split and simply use cross validation; I want to try this since sample size is only 482
 
     # Perform grid search with cross-validation
     rf = RandomForestRegressor(random_state=42, n_estimators=100)
-    grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=10, scoring='r2')
-    grid_search.fit(X_train, y_train)
+    # grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=10, scoring='r2')
+    # trying mean squared error instead
+    grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=10, scoring='neg_mean_squared_error')
+    # grid_search.fit(X_train, y_train)
+    grid_search.fit(X, y)
 
     # Store results
     rf_results[sig] = {'best_params': grid_search.best_params_, 'best_score': grid_search.best_score_,
@@ -85,59 +90,82 @@ for sig in sig_dic.keys():
 
 
 rf_final_results = {}
-
+rf_performance = pandas.DataFrame()
 # Based on best hyperparameters, generate final random forest models for each signature
 # Loop over each variable
 for sig in sig_dic.keys():
     X = attrib_df  # Features
     y = sig_dic[sig]  # Target variable
 
-    # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # # Split the data into training and test sets
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     max_features = rf_results[sig]['best_params']['max_features']
     n_estimators = rf_results[sig]['best_params']['n_estimators']
 
     rf = RandomForestRegressor(n_estimators=n_estimators, max_features=max_features, random_state=42)
-    rf.fit(X_train, y_train)
+    # rf.fit(X_train, y_train)
+    rf.fit(X, y)
     # print(f"R-squared on test data: {rf.score(X_test, y_test):.2f}")c
 
-    # Perform 10-fold cross-validation
-    cv_scores = cross_val_score(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42))
+    # scoring metrics
+    scoring = {'mse': 'neg_mean_squared_error', 'r2': 'r2'}
 
-    # mean squared error
-    y_pred = rf.predict(X_test)
-    og_mse = mean_squared_error(y_test, y_pred)
-    # print("Mean Squared Error (MSE):", mse)
+    # Perform cross-validation
+    cv_results = cross_validate(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42), scoring=scoring)
+
+    # Extract MSE and R^2 scores
+    mse_cv_og = -cv_results['test_mse'].mean()  # Convert negative MSE to positive
+    r2_cv_og = cv_results['test_r2'].mean()
+
+    # # Perform 10-fold cross-validation
+    # cv_scores = cross_val_score(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42),
+    #                             scoring='neg_mean_squared_error')
+
+    # # mean squared error
+    # y_pred = rf.predict(X_test)
+    # og_mse = mean_squared_error(y_test, y_pred)
+    # # print("Mean Squared Error (MSE):", mse)
+    #
+    # # store results
+    # rf_final_results[sig] = {'mean R-squared from cross-validation': cv_scores.mean(),
+    #                          'R-squared on test data': rf.score(X_test, y_test),
+    #                          'mean squared error': og_mse}
 
     # store results
-    rf_final_results[sig] = {'mean R-squared from cross-validation': cv_scores.mean(),
-                             'R-squared on test data': rf.score(X_test, y_test),
-                             'mean squared error': og_mse}
-
+    rf_final_results[sig] = {'mean MSE from cross-validation': mse_cv_og,
+                             'mean R2 from cross-validation': r2_cv_og}
 
     # Calculate the change in MSE for each predictor variable (by removing each variable one at a time)
     change_in_mse = []
 
-    for attrib in range(X_test.shape[1]):
+    for attrib in range(X.shape[1]):
         # Permute values of attributes (instead of removing the attribute, which is how I initially approached this)
-        X_test_permuted = X_test.copy()
+        X_permuted = X.copy()
 
-        attrib_col = X_test_permuted.columns[attrib]
+        attrib_col = X_permuted.columns[attrib]
 
         # Convert the selected column to a list, shuffle it, and assign it back to the DataFrame
-        values_list = X_test_permuted[attrib_col].tolist()
+        values_list = X_permuted[attrib_col].tolist()
         numpy.random.shuffle(values_list)
-        X_test_permuted[attrib_col] = values_list
+        X_permuted[attrib_col] = values_list
         # print(X_permuted)
 
-        # Predict with the modified dataset and compute OOB mean squared error (mse_j)
-        y_pred_permuted = rf.predict(X_test_permuted)
-        mse_perm = mean_squared_error(y_test, y_pred_permuted)
+        # # Predict with the modified dataset and compute OOB mean squared error (mse_j)
+        # y_pred_permuted = rf.predict(X_test_permuted)
+        # mse_perm = mean_squared_error(y_test, y_pred_permuted)
+
+        # instead using cross validation prediction
+        y_pred_cv = cross_val_predict(rf, X_permuted, y, cv=KFold(n_splits=10, shuffle=True, random_state=42))
+
+        # Calculate mean squared error (MSE)
+        mse_perm = mean_squared_error(y, y_pred_cv)
+        # print(mse_perm)
 
         # Calculate the %IncMSE for predictor variable j
-        percent_inc_mse = ((mse_perm - og_mse) / og_mse) * 100
+        percent_inc_mse = ((mse_perm - mse_cv_og) / mse_cv_og) * 100
         change_in_mse.append(percent_inc_mse)
+
 
         # # Create a copy of the test data with the current predictor variable removed
         # X_test_removed = X_test.drop(X_test.columns[attrib], axis=1)
@@ -157,12 +185,15 @@ for sig in sig_dic.keys():
         # change_in_mse.append(percent_change)
 
 
+
+    # final performance results (everything)
+
     # Plot the change in MSE for each predictor variable
     # print(change_in_mse)
 
     sorted_idx = numpy.argsort(change_in_mse)
     sorted_change_in_mse = [change_in_mse[i] for i in sorted_idx]
-    sorted_columns = X_test.columns[sorted_idx]
+    sorted_columns = X.columns[sorted_idx]
 
     plt.figure(figsize=(10, 6))
     plt.barh(range(len(sorted_idx)), sorted_change_in_mse, align='center')
@@ -171,6 +202,12 @@ for sig in sig_dic.keys():
     plt.title('Change in Mean Squared Error for Each Predictor Variable (Variable Removal)')
     plt.show()
 
+    performance_df = pandas.DataFrame({'sig': sig, 'cv_r2': r2_cv_og, 'cv_mse': mse_cv_og, 'n_trees': n_estimators,
+                                     'max_features': max_features, 'variable': sorted_columns,
+                                     'IncMSE': sorted_change_in_mse}, index=[0])
+
+    # Append the current iteration DataFrame to the results DataFrame
+    rf_performance = rf_performance.append(performance_df, ignore_index=True)
 
 
 
