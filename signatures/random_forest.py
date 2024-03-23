@@ -21,12 +21,12 @@ rf_data_df_dropna = rf_data_df.dropna()
 # keys will be hydrologic signature variable names
 # include a separate predictor dataframe
 
-# sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
-#             'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
-#             'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
-#             'BFI']
+sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
+            'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
+            'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
+            'BFI']
 
-sig_list = ['EventRR', 'TotalRR']
+# sig_list = ['EventRR', 'TotalRR']
 
 attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
@@ -57,6 +57,10 @@ for var in sig_list:
 
 # Define parameter grid
 param_grid = {'n_estimators': [10, 50, 100, 150, 200, 250, 500, 1000], 'max_features': ['log2', 'sqrt']}
+
+# just for code testing
+# param_grid = {'n_estimators': [10], 'max_features': ['log2']}
+
 # 100 trees was generally enough to maximize accuracy but minimze computation
 # (accuracy only varied about 1% with up to 1000 trees)
 # accuracy varied a bit more with max_features... so letting log2 or sqrt vary for each signature
@@ -195,19 +199,20 @@ for sig in sig_dic.keys():
     sorted_change_in_mse = [change_in_mse[i] for i in sorted_idx]
     sorted_columns = X.columns[sorted_idx]
 
-    plt.figure(figsize=(10, 6))
-    plt.barh(range(len(sorted_idx)), sorted_change_in_mse, align='center')
-    plt.yticks(range(len(sorted_idx)), sorted_columns)
-    plt.xlabel('Change in Mean Squared Error')
-    plt.title('Change in Mean Squared Error for Each Predictor Variable (Variable Removal)')
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # plt.barh(range(len(sorted_idx)), sorted_change_in_mse, align='center')
+    # plt.yticks(range(len(sorted_idx)), sorted_columns)
+    # plt.xlabel('Change in Mean Squared Error')
+    # plt.title('Change in Mean Squared Error for Each Predictor Variable (Variable Removal)')
+    # plt.show()
 
     performance_df = pandas.DataFrame({'sig': sig, 'cv_r2': r2_cv_og, 'cv_mse': mse_cv_og, 'n_trees': n_estimators,
                                      'max_features': max_features, 'variable': sorted_columns,
-                                     'IncMSE': sorted_change_in_mse}, index=[0])
+                                     'IncMSE': sorted_change_in_mse})
+    # print(performance_df)
 
     # Append the current iteration DataFrame to the results DataFrame
-    rf_performance = rf_performance.append(performance_df, ignore_index=True)
+    rf_performance = rf_performance._append(performance_df, ignore_index=True)
 
 
 
@@ -231,7 +236,9 @@ for sig in sig_dic.keys():
     # ax.figure.tight_layout()
     # plt.show()
 
+rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/rf_performance_output.csv')
 
+print(rf_performance)
 print(rf_results)
 print(rf_final_results)
 
