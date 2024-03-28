@@ -4,6 +4,39 @@ library(tidyverse)
 
 rf_performance = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/rf_performance_output.csv')
 
+#### Performance Plotting ####
+
+rf_performance_r2 = rf_performance %>% 
+  group_by(sig) %>% 
+  summarize(cv_r2 = median(cv_r2))
+
+# eventually, want a bar plot with two different R2 for each signature
+# R2 when inlcude or remove the new catchment attributes
+# to do so, have the data long, with another column labeling R2with and R2without
+# then, geom_col(data = df, aes(x = sigs, y = value, fill = r2_variable)
+
+# boxplot, R2 on y axis, signature on x axix
+ggplot(rf_performance_r2, aes(x = sig, y = cv_r2)) +
+  geom_col() +
+  labs(
+    y = "R2",
+    x = "Hydrologic Signature",
+    title = "Model Performance, Cross Validation"
+  ) +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(size = 24),
+    text = element_text(size = 20),   # Increase text (axis labels, title) size
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels diagonally
+    axis.text.y = element_text(size = 14),  # Adjust y-axis text size
+    legend.position = "left",  # Move legend to the left side
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),  # Adjust legend text size
+    legend.key.size = unit(2, "lines")  # Adjust the size of the legend color key
+  )
+
+
+#### VARIABLE IMPORTANCE PLOTTING (incMSE) ####
 rf_performance_test = rf_performance %>% 
   filter(cv_r2 > 0.4) %>% 
   filter(IncMSE > 0)
