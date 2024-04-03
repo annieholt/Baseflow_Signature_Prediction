@@ -12,6 +12,8 @@ tossh_path = 'C:/Users/holta/Documents/Repositories/TOSSH'
 
 # get data for hydrologic signatures
 sigs = get_sig_df(tossh_path, pi_path)
+print(sigs)
+# sigs.to_csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels.csv', index=False)
 # look at the number of NAs
 nan_count = sigs.isna().sum()
 # print(nan_count)
@@ -57,7 +59,7 @@ print(cluster_means_2)
 
 # now create dataset of 48 contiguous United States
 # import from local file
-usa = geopandas.read_file('D:/SDSU_GEOG/Thesis/Data/US states/cb_2018_us_state_500k/cb_2018_us_state_500k.shp')
+usa = geopandas.read_file('E:/SDSU_GEOG/Thesis/Data/US states/cb_2018_us_state_500k/cb_2018_us_state_500k.shp')
 state_names = ["Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut",
                "District ", "of Columbia", "Delaware", "Florida", "Georgia", "Iowa", "Idaho",
                "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine",
