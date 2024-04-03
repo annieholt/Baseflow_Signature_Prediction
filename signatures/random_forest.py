@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 # import input data for random forest modeling
 # in this case, dataset of hydrologic signatures and catchment attributes
 
-rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_caravan_master.csv")
+# rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
+rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv")
 
 rf_data_df_dropna = rf_data_df.dropna()
 
@@ -28,6 +29,7 @@ sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', '
 
 # sig_list = ['EventRR', 'TotalRR']
 
+# either include or don't include new attributes ('geol_major_age_ma', 'non_giw_frac', 'geol_av_age_ma', 'giw_frac')
 attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
                            'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c',
@@ -35,6 +37,17 @@ attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_fr
                            'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK', 'BFI'],
                           axis=1)
 
+# for camels dataset, drop categorical columns as well
+# attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
+#                                     'high_prec_timing', 'low_prec_timing', 'geol_1st_class', 'glim_1st_class_frac',
+#                                     'dom_land_cover', 'dom_land_cover_frac',
+#                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
+#                            'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c',
+#                            'MRC_num_segments', 'First_Recession_Slope', 'Mid_Recession_Slope',
+#                            'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK', 'BFI'],
+#                           axis=1)
+
+# print(attrib_df)
 
 # empty dictionary for results
 sig_dic = {}
@@ -214,9 +227,6 @@ for sig in sig_dic.keys():
     # Append the current iteration DataFrame to the results DataFrame
     rf_performance = rf_performance._append(performance_df, ignore_index=True)
 
-
-
-
     # # permutation importance
     # # NOTE: this is different than increase in mean squared error
     # # so later, try MSE... and decide if perturb the variable or remove it entirely
@@ -236,7 +246,8 @@ for sig in sig_dic.keys():
     # ax.figure.tight_layout()
     # plt.show()
 
-rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/rf_performance_output.csv')
+# rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/scratch/rf_performance_output.csv')
+rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
 
 print(rf_performance)
 print(rf_results)
