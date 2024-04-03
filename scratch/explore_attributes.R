@@ -94,6 +94,9 @@ camels_caravan = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan/attributes/camels/at
 
 camels_hydroatlas = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan/attributes/camels/attributes_hydroatlas_camels.csv")
 
+camels_caravan_other = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan/attributes/camels/attributes_other_camels.csv")
+
+
 # add catchment area???? look at the other attribute table
 
 # seleted attributes: 
@@ -109,6 +112,16 @@ camels_caravan_attribs = camels_hydroatlas %>%
          for_pc_sse, gla_pc_sse,
          cly_pc_sav, slt_pc_sav, snd_pc_sav, soc_th_sav, kar_pc_sse, ero_kh_sav) %>% 
   left_join(camels_caravan, by = "gauge_id") %>% 
+  left_join(camels_caravan_other %>% select(gauge_id, area), by = "gauge_id") %>% 
+  mutate(gauge_id = gsub("^camels_", "", gauge_id))
+
+
+camels_caravan_attribs_v2 = camels_hydroatlas %>% 
+  select(gauge_id, ele_mt_smn, slp_dg_sav,
+         for_pc_sse,
+         cly_pc_sav, slt_pc_sav, snd_pc_sav, soc_th_sav, kar_pc_sse, swc_pc_syr) %>% 
+  left_join(camels_caravan, by = "gauge_id") %>% 
+  left_join(camels_caravan_other %>% select(gauge_id, area), by = "gauge_id") %>% 
   mutate(gauge_id = gsub("^camels_", "", gauge_id))
 
 #### data for practicing RF modeling ####
@@ -126,11 +139,13 @@ rf_df_final = sigs_c_2 %>%
 # write.csv(rf_df_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv", row.names = FALSE)
 
 
-rf_caravan_final = camels_caravan_attribs %>% 
+rf_caravan_final = camels_caravan_attribs_v2 %>% 
   left_join(new_attrib, by = "gauge_id") %>% 
-  left_join(sigs_c_2, by = "gauge_id")
+  left_join(sigs_c_2, by = "gauge_id") %>% 
+  mutate(total_wet = giw_frac + non_giw_frac) %>% 
+  filter(total_wet > 0.05)
 
-# write.csv(rf_caravan_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_caravan_master.csv", row.names = FALSE)
+# write.csv(rf_caravan_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv", row.names = FALSE)
 
 
 rf_df_1 = camels_hydro %>% 
