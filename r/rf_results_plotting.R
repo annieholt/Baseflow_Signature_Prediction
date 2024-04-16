@@ -7,7 +7,7 @@ rf_performance_plus = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf
 rf_performance_camels = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_camels_plus_output.csv')
 
 rf_performance_wet = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
-
+rf_performance_eco = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output.csv')
 
 #### Performance Plotting ####
 
@@ -142,19 +142,24 @@ ggplot(rf_performance_2, aes(x = sig, y = variable, color = IncMSE_Category, siz
 # I still don't love the color scales since a lot of the data is middle range, but ok for now
 
 
-rf_variables = rf_performance_wet %>% 
+rf_variables = rf_performance_eco %>% 
   filter(sig != "Spearmans_rho") %>% 
   filter(sig != "MRC_num_segments") %>% 
   filter(sig != "RecessionParameters_a") %>% 
   mutate(IncMSE = ifelse(IncMSE <0, 0, IncMSE))
 
+rf_variables_2 = rf_performance_plus %>% 
+  filter(sig != "Spearmans_rho") %>% 
+  filter(sig != "MRC_num_segments") %>% 
+  filter(sig != "RecessionParameters_a") %>% 
+  mutate(IncMSE = ifelse(IncMSE <0, 0, IncMSE))
 
 desired_order <- rev(c("p_mean", "pet_mean", "aridity", "frac_snow","moisture_index", "seasonality", "high_prec_freq", "high_prec_dur",
                    "low_prec_freq", "low_prec_dur",
                    "ele_mt_smn", "slp_dg_sav", 'area',
                    'for_pc_sse',
                    "swc_pc_syr", "cly_pc_sav", "slt_pc_sav", "snd_pc_sav", "soc_th_sav", "kar_pc_sse",
-                   'giw_frac', 'geol_av_age_ma' ))
+                   'fresh_no_giw', 'geol_major_age_ma' ))
 
 rf_variables$variable <- factor(rf_variables$variable, levels = desired_order)
 
@@ -162,8 +167,8 @@ ggplot(rf_variables, aes(x = sig, y = variable, fill = IncMSE, size = IncMSE)) +
   geom_point(shape = 21, color = 'black') +
   # scale_color_viridis_c()+
   scale_fill_gradient2(low = "white",high = "black", name = "IncMSE",
-                        midpoint = median(rf_performance$IncMSE)) +
-  scale_size_continuous(range = c(2, 12)) +
+                        midpoint = median(rf_variables_2$IncMSE),  limits = c(0, 35)) +
+  scale_size_continuous(range = c(2, 8)) +
   labs(
     y = NULL,  # No y-axis label
     x = NULL,
@@ -182,4 +187,4 @@ ggplot(rf_variables, aes(x = sig, y = variable, fill = IncMSE, size = IncMSE)) +
   ) +
   guides(size = FALSE)
 
-# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_eco_eastern_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
