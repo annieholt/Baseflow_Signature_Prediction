@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 # in this case, dataset of hydrologic signatures and catchment attributes
 
 # rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
-rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv")
+# rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv")
+rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_eco_eastern_forests.csv")
 
 rf_data_df_dropna = rf_data_df.dropna()
 
@@ -30,7 +31,7 @@ sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', '
 # sig_list = ['EventRR', 'TotalRR']
 
 # either include or don't include new attributes ('geol_major_age_ma', 'non_giw_frac', 'geol_av_age_ma', 'giw_frac')
-attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'non_giw_frac',
+attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'fresh_no_giw',
                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
                            'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c',
                            'MRC_num_segments', 'First_Recession_Slope', 'Mid_Recession_Slope',
@@ -247,7 +248,8 @@ for sig in sig_dic.keys():
     # plt.show()
 
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/scratch/rf_performance_output.csv')
-rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
+# rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
+rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output_v2.csv')
 
 print(rf_performance)
 print(rf_results)
