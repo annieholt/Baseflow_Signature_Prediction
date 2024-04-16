@@ -34,23 +34,35 @@ giws = st_read('E:/SDSU_GEOG/Thesis/Data/GIWs/giws_metrics.shp') %>%
 geol_c = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Shapefiles/sgmc_camels_metrics.shp') %>% 
   as.data.frame() %>% 
   # select(gauge_id, av_age) %>% 
-  rename(geol_major_age_ma = av_age)
+  rename(geol_major_age_ma = av_age) %>% 
+  select(gauge_id, major_lith, lith_area_, geol_major_age_ma)
 
 # average age of catchment (age weighted by area of geologic unit type)
 geol_c_av = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Shapefiles/sgmc_camels_metrics_age_weighted.shp') %>% 
   as.data.frame() %>% 
   # select(gauge_id, av_age_w) %>% 
-  rename(geol_av_age_ma = av_age_w)
+  rename(geol_av_age_ma = av_age_w) %>% 
+  select(gauge_id, geol_av_age_ma)
 
 
 new_attrib = nwi_c %>% 
-  left_join(giws, by = "gauge_id") %>% 
+  left_join(giws, by = c("gauge_id")) %>% 
   # some places have zero isolated wetlands, so replace NAs with zero since shapefiles weren't returned for those
-  mutate(giw_frac= ifelse(is.na(area_frac), 0, area_frac)) %>% 
-  mutate(non_giw_frac = fresh + lake - giw_frac) %>% 
-  left_join(geol_c, by = "gauge_id") %>% 
-  left_join(geol_c_av, by = "gauge_id") %>% 
-  select(gauge_id, giw_frac, non_giw_frac, geol_major_age_ma, geol_av_age_ma)
+  mutate(giw_frac = ifelse(is.na(area_frac), 0, area_frac)) %>% 
+  mutate(lake = ifelse(is.na(lake), 0, lake)) %>% 
+  mutate(fresh = ifelse(is.na(fresh), 0, fresh)) %>% 
+  mutate(other = ifelse(is.na(other), 0, other)) %>% 
+  mutate(fresh_no_giw = fresh + lake - giw_frac) %>% 
+  left_join(geol_c, by = c("gauge_id")) %>% 
+  left_join(geol_c_av, by = c("gauge_id")) %>% 
+  select(gauge_id, giw_frac, fresh_no_giw, geol_major_age_ma, geol_av_age_ma)
+
+
+# also into on ecoregions
+nwi_ecoregions = st_read('E:/SDSU_GEOG/Thesis/Data/NWI_outputs/Shapefiles/nwi_camels_metrics_ecoregions.shp') %>% 
+  as.data.frame() %>% 
+  select(gauge_id,NA_L1KEY)
+
 
 
 #### CAMELS attributes ####
@@ -141,11 +153,23 @@ rf_df_final = sigs_c_2 %>%
 
 rf_caravan_final = camels_caravan_attribs_v2 %>% 
   left_join(new_attrib, by = "gauge_id") %>% 
-  left_join(sigs_c_2, by = "gauge_id") %>% 
-  mutate(total_wet = giw_frac + non_giw_frac) %>% 
-  filter(total_wet > 0.05)
+  left_join(sigs_c_2, by = "gauge_id")
 
 # write.csv(rf_caravan_final, "E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv", row.names = FALSE)
+
+
+rf_caravan_final_eco = camels_caravan_attribs_v2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  left_join(sigs_c_2, by = "gauge_id") %>% 
+  left_join(nwi_ecoregions, by = "gauge_id") %>% 
+  # these have the most camels catchments
+  filter(NA_L1KEY %in% c("8  EASTERN TEMPERATE FORESTS", "6  NORTHWESTERN FORESTED MOUNTAINS",
+                         "9  GREAT PLAINS")) %>% 
+  # try just for one first
+  filter(NA_L1KEY == "8  EASTERN TEMPERATE FORESTS") %>% 
+  select(-NA_L1KEY)
+
+# write.csv(rf_caravan_final_eco, "E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_eco_eastern_forests.csv", row.names = FALSE)
 
 
 rf_df_1 = camels_hydro %>% 
@@ -168,40 +192,174 @@ rf_df = camels_hydro %>%
 
 
 # select(-dom_land_cover, -geol_1st_class)
-  
-#### RF AND PERMUTATION ####
 
-X <- rf_df %>% select(-baseflow_index)
-y <- as.factor(rf_df$baseflow_index)
 
-# Set seed for reproducibility
-set.seed(42)
+#### Correlation plotting ####
 
-# Split the data into training and test sets
-set.seed(42)  
-indices <- sample(1:nrow(X), size = 0.75 * nrow(X))
-X_train <- X[indices, ]
-X_test <- X[-indices, ]
+corr_attrib_iso = camels_caravan_attribs_v2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  as.data.frame() %>% 
+  select(-fresh_no_giw, -geol_major_age_ma, -geol_av_age_ma) %>% 
+  correlate(method = "spearman") %>% 
+  focus(giw_frac) %>% 
+  mutate(term_2 = factor(term, levels = term[order(giw_frac)]))
 
-# Convert y to character, subset, and convert back to factor
-y_char <- as.character(y)
-y_train <- as.factor(y_char[indices])
-y_test <- as.factor(y_char[-indices])
+corr_attrib_con = camels_caravan_attribs_v2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  as.data.frame() %>% 
+  select(-geol_major_age_ma, -giw_frac, -geol_av_age_ma) %>% 
+  correlate(method = "spearman") %>% 
+  focus(fresh_no_giw) %>% 
+  mutate(term_2 = factor(term, levels = term[order(fresh_no_giw)]))
 
-# Create and train the Random Forest classifier
-clf <- randomForest(x = X_train, y = y_train, ntree = 100, seed = 42)
+# prep for panel plotting
+corr_attrib_wet = corr_attrib_iso %>% 
+  left_join(corr_attrib_con) %>% 
+  select(term, giw_frac, fresh_no_giw) %>% 
+  gather(key = "variable", value = "value", giw_frac, fresh_no_giw)
 
-# Predict on the test set
-predictions <- predict(clf, newdata = X_test)
 
-# Create a confusion matrix
-conf_matrix <- confusionMatrix(predictions, y_test)
+desired_order <- c("p_mean", "pet_mean", "aridity", "frac_snow","moisture_index", "seasonality", "high_prec_freq", "high_prec_dur",
+                       "low_prec_freq", "low_prec_dur",
+                       "ele_mt_smn", "slp_dg_sav", 'area',
+                       'for_pc_sse',
+                       "swc_pc_syr", "cly_pc_sav", "slt_pc_sav", "snd_pc_sav", "soc_th_sav", "kar_pc_sse")
 
-# Calculate accuracy on the test data
-accuracy <- conf_matrix$overall["Accuracy"]
+corr_attrib_wet$term <- factor(corr_attrib_wet$term, levels = desired_order)
 
-# Print the accuracy on the test data
-print(paste("Baseline accuracy on test data:", round(accuracy, 2)))
+# Define custom labels for facet_wrap
+wet_labels <- c(
+  "fresh_no_giw" = "Connected Wetlands",
+  "giw_frac" = "Isolated Wetlands"
+)
+
+ggplot(corr_attrib_wet, aes(x = term, y = 1, color = value, size = abs(value))) +
+  geom_point() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "red", 
+                        midpoint = mean(corr_attrib_wet$value), name = "Spearman's Rho",
+                        limits = c(-1, 1)) +
+  scale_size(range = c(2, 12)) +  # Adjust the overall size scale
+  labs(
+    y = NULL,  # No y-axis label
+    x = NULL,
+  ) +
+  # ggtitle("Correlations with Isolated Wetland Area Fraction") +
+  theme_minimal() +                    # Use a minimal theme
+  theme(
+    plot.title = element_text(size=24),
+    text = element_text(size = 20),   # Increase text (axis labels, title) size
+    axis.title = element_text(size = 14),  # Increase axis title sizehttp://127.0.0.1:42413/graphics/plot_zoom_png?width=619&height=258
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels diagonally
+    axis.text.y = element_blank(),  # Remove y-axis values
+    legend.position = "left",  # Move legend to the left side
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),  # Adjust legend text size
+    legend.key.size = unit(2, "lines")  # Adjust the size of the legend color key
+  ) +
+  guides(size = FALSE)+
+  # coord_cartesian(ylim = c(1, 1))
+  facet_wrap(~ variable, scales = "free_y", nrow = 2, labeller = as_labeller(wet_labels))
+
+ggsave("E:/SDSU_GEOG/Thesis/Data/Signatures/figures_final/attributes_wetlands_correlations.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+
+
+# geology 
+
+corr_attrib_geol = camels_caravan_attribs_v2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  as.data.frame() %>% 
+  select(-fresh_no_giw, -giw_frac, -geol_major_age_ma) %>% 
+  correlate(method = "spearman") %>% 
+  focus(geol_av_age_ma) %>% 
+  mutate(term_2 = factor(term, levels = term[order(geol_av_age_ma)]))
+
+corr_attrib_geol_lith = camels_caravan_attribs_v2 %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  as.data.frame() %>% 
+  select(-fresh_no_giw, -giw_frac, -geol_av_age_ma) %>% 
+  correlate(method = "spearman") %>% 
+  focus(geol_major_age_ma) %>% 
+  mutate(term_2 = factor(term, levels = term[order(geol_major_age_ma)]))
+
+# prep for panel plotting
+corr_attrib_geol = corr_attrib_geol %>% 
+  left_join(corr_attrib_geol_lith) %>% 
+  select(term, geol_av_age_ma, geol_major_age_ma) %>% 
+  gather(key = "variable", value = "value", geol_av_age_ma, geol_major_age_ma)
+
+
+corr_attrib_geol$term <- factor(corr_attrib_geol$term, levels = desired_order)
+
+# Define custom labels for facet_wrap
+geol_labels <- c(
+  "geol_av_age_ma" = "Average Geologic Age",
+  "geol_major_age_ma" = "Geoloic Age of Major Lithology"
+)
+
+ggplot(corr_attrib_geol, aes(x = term, y = 1, color = value, size = abs(value))) +
+  geom_point() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "red", 
+                        midpoint = mean(corr_attrib_geol$value), name = "Spearman's Rho",
+                        limits = c(-1, 1)) +
+  scale_size(range = c(2, 12)) +  # Adjust the overall size scale
+  labs(
+    y = NULL,  # No y-axis label
+    x = NULL,
+  ) +
+  # ggtitle("Correlations with Isolated Wetland Area Fraction") +
+  theme_minimal() +                    # Use a minimal theme
+  theme(
+    plot.title = element_text(size=24),
+    text = element_text(size = 20),   # Increase text (axis labels, title) size
+    axis.title = element_text(size = 14),  # Increase axis title sizehttp://127.0.0.1:42413/graphics/plot_zoom_png?width=619&height=258
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels diagonally
+    axis.text.y = element_blank(),  # Remove y-axis values
+    legend.position = "left",  # Move legend to the left side
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),  # Adjust legend text size
+    legend.key.size = unit(2, "lines")  # Adjust the size of the legend color key
+  ) +
+  guides(size = FALSE)+
+  # coord_cartesian(ylim = c(1, 1))
+  facet_wrap(~ variable, scales = "free_y", nrow = 2, labeller = as_labeller(geol_labels))
+
+# ggsave("E:/SDSU_GEOG/Thesis/Data/Signatures/figures_final/attributes_geologic_age_correlations.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+
+
+
+#### RF AND PERMUTATION; just testing here, but final models in python ####
+
+# X <- rf_df %>% select(-baseflow_index)
+# y <- as.factor(rf_df$baseflow_index)
+# 
+# # Set seed for reproducibility
+# set.seed(42)
+# 
+# # Split the data into training and test sets
+# set.seed(42)  
+# indices <- sample(1:nrow(X), size = 0.75 * nrow(X))
+# X_train <- X[indices, ]
+# X_test <- X[-indices, ]
+# 
+# # Convert y to character, subset, and convert back to factor
+# y_char <- as.character(y)
+# y_train <- as.factor(y_char[indices])
+# y_test <- as.factor(y_char[-indices])
+# 
+# # Create and train the Random Forest classifier
+# clf <- randomForest(x = X_train, y = y_train, ntree = 100, seed = 42)
+# 
+# # Predict on the test set
+# predictions <- predict(clf, newdata = X_test)
+# 
+# # Create a confusion matrix
+# conf_matrix <- confusionMatrix(predictions, y_test)
+# 
+# # Calculate accuracy on the test data
+# accuracy <- conf_matrix$overall["Accuracy"]
+# 
+# # Print the accuracy on the test data
+# print(paste("Baseline accuracy on test data:", round(accuracy, 2)))
 
 
 
