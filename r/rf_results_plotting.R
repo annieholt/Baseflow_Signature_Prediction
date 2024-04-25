@@ -106,7 +106,7 @@ rf_performance_test = rf_performance %>%
   filter(cv_r2 > 0.4) %>% 
   filter(IncMSE > 0)
 
-rf_performance_2 = rf_performance_plus_v3 %>% 
+rf_performance_2 = rf_performance_v3 %>% 
   mutate(IncMSE_Category = case_when(
     IncMSE <= 5 ~ "<5",
     IncMSE > 5 & IncMSE <= 15 ~ "5-15",
@@ -146,7 +146,7 @@ ggplot(rf_performance_2, aes(x = sig, y = variable, color = IncMSE_Category, siz
   ) +
   guides(size = FALSE)
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_v3_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_v3_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
 
 
 
