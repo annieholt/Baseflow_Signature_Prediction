@@ -7,13 +7,15 @@ import numpy as np
 
 # testing functions
 # import data
-pi_path = 'C:/Users/holta/Documents/Repositories/baseflow_prediction/signatures/camels_gw_sigs_pi.obj'
+# pi_path = 'C:/Users/holta/Documents/Repositories/baseflow_prediction/signatures/camels_gw_sigs_pi.obj'
+pi_path = 'C:/Users/holta/Documents/Repositories/baseflow_prediction/signatures/camels_gw_sigs_pi_v2.obj'
 tossh_path = 'C:/Users/holta/Documents/Repositories/TOSSH'
 
 # get data for hydrologic signatures
 sigs = get_sig_df(tossh_path, pi_path)
+# sigs.to_csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels_v2.csv', index=False)
 print(sigs)
-# sigs.to_csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels.csv', index=False)
+
 # look at the number of NAs
 nan_count = sigs.isna().sum()
 # print(nan_count)
