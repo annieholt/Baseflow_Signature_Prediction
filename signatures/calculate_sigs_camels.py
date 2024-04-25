@@ -97,7 +97,8 @@ def get_sig_df(tossh_path, pi_path):
                                      "RecessionParameters_a", "RecessionParameters_b", "RecessionParameters_c",
                                      "AverageStorage", "Recession_a_Seasonality", "MRC_num_segments",
                                      "First_Recession_Slope", "Mid_Recession_Slope", "Spearmans_rho",
-                                     "EventRR_TotalRR_ratio", "VariabilityIndex", "BFI", "BaseflowRecessionK"]]
+                                     "EventRR_TotalRR_ratio", "VariabilityIndex", "BFI", "BFI_90",
+                                     "BaseflowRecessionK"]]
 
     # select 5 most recommended signatures by McMillan et al., 2022
     # Total RR, Average Storage, Recession a seasonality, BFI, Baseflow Recession K
