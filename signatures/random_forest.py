@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 # rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/sigs_attributes_master.csv")
 # rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv")
-rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_eco_eastern_forests.csv")
+# rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_eco_eastern_forests.csv")
+rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v3.csv")
 
 rf_data_df_dropna = rf_data_df.dropna()
 
@@ -70,7 +71,8 @@ for var in sig_list:
 # and a dictionary 'response_data' containing response variables for each of the 15 variables
 
 # Define parameter grid
-param_grid = {'n_estimators': [10, 50, 100, 150, 200, 250, 500, 1000], 'max_features': ['log2', 'sqrt']}
+param_grid = {'n_estimators': [500], 'max_features': ['log2']}
+# param_grid = {'n_estimators': [10, 50, 100, 150, 200, 250, 500, 1000], 'max_features': ['log2', 'sqrt']}
 
 # just for code testing
 # param_grid = {'n_estimators': [10], 'max_features': ['log2']}
@@ -249,7 +251,8 @@ for sig in sig_dic.keys():
 
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/scratch/rf_performance_output.csv')
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
-rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output_v2.csv')
+# rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output_v2.csv')
+rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_output_v3_BFI90.csv')
 
 print(rf_performance)
 print(rf_results)
