@@ -2,16 +2,22 @@
 
 library(tidyverse)
 
+# outputs, with caravan attributes matched to camels attributes
 rf_performance = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_output.csv')
 rf_performance_plus = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_output.csv')
 rf_performance_camels = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_camels_plus_output.csv')
 
+# looking at outputs from regional random forests (prob need to re-run with same hyperparameters)
 rf_performance_wet = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
 rf_performance_eco = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output.csv')
 
+# looking at outputs from caravan and new predictors, removing those that are correlated > 0.7
+rf_performance_plus_v3 = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_output_v3.csv')
+rf_performance_v3 = read.csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_output_v3.csv')
+
 #### Performance Plotting ####
 
-rf_performance_r2 = rf_performance %>% 
+rf_performance_r2 = rf_performance_v3 %>% 
   group_by(sig) %>% 
   summarize(cv_r2 = median(cv_r2)) %>% 
   rename(cv_r2_caravan = cv_r2)
@@ -20,16 +26,17 @@ rf_performance_r2 = rf_performance %>%
 rf_performance_r2$sig <- factor(rf_performance_r2$sig, levels = rf_performance_r2$sig[order(rf_performance_r2$cv_r2_caravan, decreasing = TRUE)])
 
 
-rf_performance_plus_r2 = rf_performance_plus %>% 
+# adding the new attributes
+rf_performance_plus_r2 = rf_performance_plus_v3 %>% 
   group_by(sig) %>% 
   summarize(cv_r2 = median(cv_r2)) %>% 
   rename(cv_r2_plus = cv_r2)
 
 
-rf_performance_camels_r2 = rf_formance_camels %>% 
-  group_by(sig) %>% 
-  summarize(cv_r2 = median(cv_r2)) %>% 
-  rename(cv_r2_camels = cv_r2)
+# rf_performance_camels_r2 = rf_performance_camels %>% 
+#   group_by(sig) %>% 
+#   summarize(cv_r2 = median(cv_r2)) %>% 
+#   rename(cv_r2_camels = cv_r2)
 
 rf_performance_final =  rf_performance_r2 %>% 
   left_join(rf_performance_plus_r2, by = "sig") %>%
@@ -72,7 +79,7 @@ ggplot(rf_performance_final, aes(x = sig, y = value, fill = r2_variable)) +
                       values = c("blue", "green"))
 
 
-# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_performance_r2.png", width = 12, height = 6, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_performance_r2_v3.png", width = 12, height = 6, dpi = 300,bg = "white")
 
 
 # trying slightly different aesthetics
@@ -99,17 +106,18 @@ rf_performance_test = rf_performance %>%
   filter(cv_r2 > 0.4) %>% 
   filter(IncMSE > 0)
 
-rf_performance_2 = rf_performance_plus %>% 
+rf_performance_2 = rf_performance_plus_v3 %>% 
   mutate(IncMSE_Category = case_when(
     IncMSE <= 5 ~ "<5",
     IncMSE > 5 & IncMSE <= 15 ~ "5-15",
     IncMSE > 15 & IncMSE <= 25 ~ "15-25",
     IncMSE > 25 & IncMSE <= 35 ~ "25-35",
     IncMSE > 35 ~ "35+",
-  ))
+  )) %>% 
+  mutate(IncMSE_Category = factor(IncMSE_Category, levels = c("<5", "5-15", "15-25", "25-35", "35+")))
 
 # Define the color and size scales
-color_scale <- c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", 'pink')
+color_scale <- c("grey", "blue", "green", "red", "red")
 size_scale <- c(3, 6, 9, 12, 15)
 
 # Define the categories and their corresponding colors and sizes
@@ -138,6 +146,10 @@ ggplot(rf_performance_2, aes(x = sig, y = variable, color = IncMSE_Category, siz
   ) +
   guides(size = FALSE)
 
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_v3_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
+
+
+
 # trying the continuous scale plotting
 # I still don't love the color scales since a lot of the data is middle range, but ok for now
 
@@ -148,22 +160,30 @@ rf_variables = rf_performance_eco %>%
   filter(sig != "RecessionParameters_a") %>% 
   mutate(IncMSE = ifelse(IncMSE <0, 0, IncMSE))
 
-rf_variables_2 = rf_performance_plus %>% 
+rf_variables_2 = rf_performance_plus_v3 %>% 
   filter(sig != "Spearmans_rho") %>% 
   filter(sig != "MRC_num_segments") %>% 
   filter(sig != "RecessionParameters_a") %>% 
   mutate(IncMSE = ifelse(IncMSE <0, 0, IncMSE))
 
-desired_order <- rev(c("p_mean", "pet_mean", "aridity", "frac_snow","moisture_index", "seasonality", "high_prec_freq", "high_prec_dur",
-                   "low_prec_freq", "low_prec_dur",
-                   "ele_mt_smn", "slp_dg_sav", 'area',
-                   'for_pc_sse',
-                   "swc_pc_syr", "cly_pc_sav", "slt_pc_sav", "snd_pc_sav", "soc_th_sav", "kar_pc_sse",
-                   'fresh_no_giw', 'geol_major_age_ma' ))
+# desired_order <- rev(c("p_mean", "pet_mean", "aridity", "frac_snow","moisture_index", "seasonality", "high_prec_freq", "high_prec_dur",
+#                    "low_prec_freq", "low_prec_dur",
+#                    "ele_mt_smn", "slp_dg_sav", 'area',
+#                    'for_pc_sse',
+#                    "swc_pc_syr", "cly_pc_sav", "slt_pc_sav", "snd_pc_sav", "soc_th_sav", "kar_pc_sse",
+#                    'fresh_no_giw', 'geol_major_age_ma' ))
 
-rf_variables$variable <- factor(rf_variables$variable, levels = desired_order)
+# updated list of attributes
+desired_order <- rev(c("p_mean", "pet_mean", "frac_snow", "seasonality", "high_prec_freq", "high_prec_dur",
+                       "ele_mt_smn", "slp_dg_sav", 'area',
+                       'for_pc_sse',
+                       "cly_pc_sav", "slt_pc_sav", "soc_th_sav", "kar_pc_sse",
+                       'giw_frac', 'geol_av_age_ma' ))
 
-ggplot(rf_variables, aes(x = sig, y = variable, fill = IncMSE, size = IncMSE)) +
+
+rf_variables_2$variable <- factor(rf_variables_2$variable, levels = desired_order)
+
+ggplot(rf_variables_2, aes(x = sig, y = variable, fill = IncMSE, size = IncMSE)) +
   geom_point(shape = 21, color = 'black') +
   # scale_color_viridis_c()+
   scale_fill_gradient2(low = "white",high = "black", name = "IncMSE",
@@ -187,4 +207,4 @@ ggplot(rf_variables, aes(x = sig, y = variable, fill = IncMSE, size = IncMSE)) +
   ) +
   guides(size = FALSE)
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_eco_eastern_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_eco_eastern_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
