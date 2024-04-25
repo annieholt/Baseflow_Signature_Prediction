@@ -10,13 +10,13 @@ library(sf)
 
 #### Hydrologic Signatures ####
 
-sigs_c = read.csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels.csv', colClasses = c(gauge_id = "character"))
+sigs_c = read.csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels_v2.csv', colClasses = c(gauge_id = "character"))
 
 sigs_c_2 = sigs_c %>% 
   select(gauge_id, TotalRR, RR_Seasonality, EventRR, Recession_a_Seasonality,
          AverageStorage, RecessionParameters_a, RecessionParameters_b, RecessionParameters_c, MRC_num_segments,
          First_Recession_Slope, Mid_Recession_Slope, Spearmans_rho, EventRR_TotalRR_ratio,
-         VariabilityIndex, BFI, BaseflowRecessionK) %>% 
+         VariabilityIndex, BFI, BFI_90, BaseflowRecessionK) %>% 
   as.data.frame()
 
 
@@ -195,6 +195,47 @@ rf_df = camels_hydro %>%
 
 
 #### Correlation plotting ####
+
+
+# Calculate Spearman correlation matrix
+correlation_matrix <- cor(camels_caravan_attribs_v2 %>% select(-gauge_id), method = "spearman")
+
+
+camels_caravan_attribs_v3 = camels_caravan_attribs_v2 %>% 
+  select(-snd_pc_sav, -swc_pc_syr, -moisture_index, -aridity, -low_prec_freq, -low_prec_dur)
+
+correlation_matrix_v3 = cor(camels_caravan_attribs_v3 %>% select(-gauge_id), method = "spearman")
+
+
+camels_caravan_attribs_new = camels_caravan_attribs_v3 %>% 
+  left_join(new_attrib, by = "gauge_id")
+
+# write.csv(camels_caravan_attribs_new, "E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v3.csv", row.names = FALSE)
+
+
+correlation_matrix_new = cor(camels_caravan_attribs_new %>% select(-gauge_id), method = "spearman")
+
+
+# Reshape the correlation matrix into a tidy format suitable for ggplot
+correlation_data <- as.data.frame(correlation_matrix_new)
+correlation_data$row <- rownames(correlation_data)
+correlation_data_long <- tidyr::pivot_longer(correlation_data, -row, names_to = "column", values_to = "correlation")
+
+scatterplot <- ggplot(correlation_data_unique, aes(x = column, y = row, fill = correlation, size = abs(correlation))) +
+  geom_point(shape = 21, alpha = 0.7) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = c(-1, 1)) +
+  scale_size(range = c(1, 7)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Attribute Correlations", x = NULL, y = NULL)
+
+# Print the scatterplot
+print(scatterplot)
+
+# ggsave("E:/SDSU_GEOG/Thesis/Data/Signatures/figures_final/attributes_correlations.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+
+## wetland/signature correlations
+
 
 corr_attrib_iso = camels_caravan_attribs_v2 %>% 
   left_join(new_attrib, by = "gauge_id") %>% 
