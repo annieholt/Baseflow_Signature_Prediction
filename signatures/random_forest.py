@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 # rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_wet.csv")
 # rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v2_eco_eastern_forests.csv")
 rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_caravan_master_v3.csv")
+# rf_data_df = pandas.read_csv("E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_camels_master_v2.csv")
 
 rf_data_df_dropna = rf_data_df.dropna()
 
@@ -24,19 +25,20 @@ rf_data_df_dropna = rf_data_df.dropna()
 # keys will be hydrologic signature variable names
 # include a separate predictor dataframe
 
-sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
-            'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
-            'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
-            'BFI']
+# sig_list = ['EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage','RecessionParameters_a',
+#             'RecessionParameters_b', 'RecessionParameters_c', 'MRC_num_segments', 'First_Recession_Slope',
+#             'Mid_Recession_Slope', 'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
+#             'BFI', 'BFI_90']
 
-# sig_list = ['EventRR', 'TotalRR']
+sig_list = ['BFI']
 
 # either include or don't include new attributes ('geol_major_age_ma', 'non_giw_frac', 'geol_av_age_ma', 'giw_frac')
 attrib_df = rf_data_df_dropna.drop(['gauge_id', 'geol_major_age_ma', 'fresh_no_giw',
                            'EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
                            'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_c',
                            'MRC_num_segments', 'First_Recession_Slope', 'Mid_Recession_Slope',
-                           'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK', 'BFI'],
+                           'Spearmans_rho', 'EventRR_TotalRR_ratio', 'VariabilityIndex', 'BaseflowRecessionK',
+                                    'BFI', 'BFI_90'],
                           axis=1)
 
 # for camels dataset, drop categorical columns as well
@@ -127,16 +129,37 @@ for sig in sig_dic.keys():
     # rf.fit(X_train, y_train)
     rf.fit(X, y)
     # print(f"R-squared on test data: {rf.score(X_test, y_test):.2f}")c
-
     # scoring metrics
     scoring = {'mse': 'neg_mean_squared_error', 'r2': 'r2'}
 
     # Perform cross-validation
     cv_results = cross_validate(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42), scoring=scoring)
 
+    # Perform cross-validation to get predictions for each fold
+    y_pred_cv = cross_val_predict(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42))
+    # Calculate the baseline MSE
+    baseline_mse = ((y - y_pred_cv) ** 2).mean()
+    print(y_pred_cv)
+
     # Extract MSE and R^2 scores
     mse_cv_og = -cv_results['test_mse'].mean()  # Convert negative MSE to positive
     r2_cv_og = cv_results['test_r2'].mean()
+
+    # Calculate variable importance using permutation
+    perm_importance_result = permutation_importance(rf, X, y, n_repeats=10, random_state=42, scoring=scoring)
+
+    print(perm_importance_result)
+
+    # Extract importances and standard deviations
+    importances = perm_importance_result.importances_mean
+    std_deviations = perm_importance_result.importances_std
+
+    # Calculate percent increase in MSE for each feature
+    percent_increase_mse = (importances / baseline_mse) * 100
+    print(percent_increase_mse)
+
+
+
 
     # # Perform 10-fold cross-validation
     # cv_scores = cross_val_score(rf, X, y, cv=KFold(n_splits=10, shuffle=True, random_state=42),
@@ -187,33 +210,22 @@ for sig in sig_dic.keys():
         change_in_mse.append(percent_inc_mse)
 
 
-        # # Create a copy of the test data with the current predictor variable removed
-        # X_test_removed = X_test.drop(X_test.columns[attrib], axis=1)
-        # X_train_removed = X_train.drop(X_train.columns[attrib], axis=1)
-        #
-        # rf_removed = RandomForestRegressor(n_estimators=n_estimators, max_features=max_features, random_state=42)
-        # rf_removed.fit(X_train_removed, y_train)
-        #
-        # # Predict using the modified model
-        # y_pred_removed = rf_removed.predict(X_test_removed)
-        #
-        # # Calculate the MSE with the current predictor variable dropped
-        # mse_dropped = mean_squared_error(y_test, y_pred_removed)
-        #
-        # # Calculate the change in MSE
-        # percent_change = ((mse_dropped - og_mse) / og_mse) * 100
-        # change_in_mse.append(percent_change)
-
-
-
     # final performance results (everything)
 
     # Plot the change in MSE for each predictor variable
-    # print(change_in_mse)
+    print(change_in_mse)
+
+    # Compute standard deviation of the differences
+    std_dev_differences = numpy.std(change_in_mse)
+
+    # Normalize change_in_mse by std_dev_differences
+    normalized_change_in_mse = [x / std_dev_differences if std_dev_differences != 0 else 0 for x in change_in_mse]
+    print(normalized_change_in_mse)
 
     sorted_idx = numpy.argsort(change_in_mse)
     sorted_change_in_mse = [change_in_mse[i] for i in sorted_idx]
     sorted_columns = X.columns[sorted_idx]
+    print(sorted_change_in_mse)
 
     # plt.figure(figsize=(10, 6))
     # plt.barh(range(len(sorted_idx)), sorted_change_in_mse, align='center')
@@ -225,7 +237,7 @@ for sig in sig_dic.keys():
     performance_df = pandas.DataFrame({'sig': sig, 'cv_r2': r2_cv_og, 'cv_mse': mse_cv_og, 'n_trees': n_estimators,
                                      'max_features': max_features, 'variable': sorted_columns,
                                      'IncMSE': sorted_change_in_mse})
-    # print(performance_df)
+    print(performance_df)
 
     # Append the current iteration DataFrame to the results DataFrame
     rf_performance = rf_performance._append(performance_df, ignore_index=True)
@@ -252,7 +264,8 @@ for sig in sig_dic.keys():
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/scratch/rf_performance_output.csv')
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_wet_output.csv')
 # rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_plus_eco_eastern_forests_output_v2.csv')
-rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_output_v3_BFI90.csv')
+# rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_caravan_output_v3_BFI90.csv')
+rf_performance.to_csv('E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/rf_performance_camels_output_v3.csv')
 
 print(rf_performance)
 print(rf_results)
