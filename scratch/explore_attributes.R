@@ -17,7 +17,8 @@ sigs_c_2 = sigs_c %>%
          AverageStorage, RecessionParameters_a, RecessionParameters_b, RecessionParameters_c, MRC_num_segments,
          First_Recession_Slope, Mid_Recession_Slope, Spearmans_rho, EventRR_TotalRR_ratio,
          VariabilityIndex, BFI, BFI_90, BaseflowRecessionK) %>% 
-  as.data.frame()
+  as.data.frame() %>% 
+  rename(RecessionParameters_T0 = RecessionParameters_c)
 
 
 #### New Attributes ####
@@ -55,7 +56,8 @@ new_attrib = nwi_c %>%
   mutate(fresh_no_giw = fresh + lake - giw_frac) %>% 
   left_join(geol_c, by = c("gauge_id")) %>% 
   left_join(geol_c_av, by = c("gauge_id")) %>% 
-  select(gauge_id, giw_frac, fresh_no_giw, geol_major_age_ma, geol_av_age_ma)
+  select(gauge_id, giw_frac, fresh_no_giw, geol_major_age_ma, geol_av_age_ma) %>% 
+  mutate(giw_frac = ifelse(giw_frac <0, 0, giw_frac)) 
 
 
 # also into on ecoregions
@@ -94,9 +96,9 @@ camels_vege = read.table(paste(camels_path, "/camels_vege.txt", sep = ""), sep =
 camels_attribs = camels_topo %>% 
   select(-gauge_lat, -gauge_lon, -area_geospa_fabric) %>% 
   left_join(camels_clim, by = "gauge_id") %>% 
-  left_join(camels_geol %>% select(-geol_2nd_class, -glim_2nd_class_frac), by = "gauge_id") %>% 
-  left_join(camels_soil %>% select(-soil_porosity, -soil_conductivity), by = "gauge_id") %>% 
-  left_join(camels_vege %>% select(-lai_diff, -gvf_diff), by = "gauge_id") %>% 
+  left_join(camels_geol, by = "gauge_id") %>% 
+  left_join(camels_soil, by = "gauge_id") %>% 
+  left_join(camels_vege, by = "gauge_id") %>% 
   mutate(gauge_id = str_pad(string = as.numeric(gauge_id), width = 8, side = 'left', pad = 0))
 
 
@@ -196,6 +198,27 @@ rf_df = camels_hydro %>%
 
 #### Correlation plotting ####
 
+## camels data and new attributes
+
+camels_attribs_new = camels_attribs %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  select(-geol_1st_class, -glim_1st_class_frac, -geol_2nd_class, -glim_2nd_class_frac,
+         -dom_land_cover_frac, -dom_land_cover, 
+         -low_prec_timing, -high_prec_timing, -root_depth_50, -root_depth_99) %>% 
+  select(-aridity, -slope_mean, -high_prec_freq, -high_prec_dur, -sand_frac, -soil_conductivity, -lai_diff, -lai_max, -gvf_max,-low_prec_freq) %>% 
+  # select(-slope_mean)
+  drop_na()
+
+correlation_camels_attribs = cor(camels_attribs_new %>% select(-gauge_id), method = "spearman")
+
+rf_camels = sigs_c_2 %>% 
+  left_join(camels_attribs_new, by = "gauge_id")
+
+# write.csv(rf_camels, "E:/SDSU_GEOG/Thesis/Data/RandomForest/outputs/sigs_attributes_camels_master_v2.csv", row.names = FALSE)
+
+
+
+# soil_porosity, soil_conductivity , lai_diff, gvf_diff
 
 # Calculate Spearman correlation matrix
 correlation_matrix <- cor(camels_caravan_attribs_v2 %>% select(-gauge_id), method = "spearman")
@@ -367,7 +390,6 @@ ggplot(corr_attrib_geol, aes(x = term, y = 1, color = value, size = abs(value)))
 # ggsave("E:/SDSU_GEOG/Thesis/Data/Signatures/figures_final/attributes_geologic_age_correlations.png", width = 10.5, height = 6, dpi = 300,bg = "white")
 
 
-
 #### RF AND PERMUTATION; just testing here, but final models in python ####
 
 # X <- rf_df %>% select(-baseflow_index)
@@ -403,6 +425,62 @@ ggplot(corr_attrib_geol, aes(x = term, y = 1, color = value, size = abs(value)))
 # print(paste("Baseline accuracy on test data:", round(accuracy, 2)))
 
 
+#### TESTING AGAIN ####
+
+## Set seed for reproducibility
+set.seed(42)
+
+rf_caravan = camels_caravan_attribs_new %>% 
+  left_join(sigs_c_2 %>% select(gauge_id, BFI), by = 'gauge_id') %>% 
+  select(-gauge_id) %>% 
+  select(-fresh_no_giw, -geol_major_age_ma)
+
+rf_camels = camels_attribs %>% 
+  select(-lai_diff, -gvf_diff, -soil_porosity, -soil_conductivity, -geol_2nd_class, -glim_2nd_class_frac) %>% 
+  left_join(sigs_c_2 %>% select(gauge_id, BFI), by = 'gauge_id') %>% 
+  left_join(new_attrib, by = "gauge_id") %>% 
+  select(-fresh_no_giw, -geol_major_age_ma, -geol_av_age_ma) %>%
+  select(-gauge_id) %>% 
+  drop_na()
+
+## Define repeated cross-validation with 10 folds and three repeats
+repeat_cv <- trainControl(method = 'repeatedcv', number = 10, repeats = 3)
+
+## Train a random forest model using cross-validation
+forest <- train(
+  # Formula: Predict baseflow_index using all other variables
+  BFI ~ .,
+  # Source of data
+  data = rf_camels,
+  # Random forest method
+  method = 'rf',
+  # Add repeated cross-validation as trControl
+  trControl = repeat_cv,
+  # Metric to evaluate model performance
+  
+  metric = 'Rsquared',
+  # metric = 'RMSE',
+  # Number of trees
+  ntree = 500,  # Adjust the number of trees as desired
+  # Number of variables to consider at each split
+  # mtry = 4, 
+  
+  importance = TRUE
+)
+
+## Extract the trained random forest model
+rf_model <- forest$finalModel
+# 
+# var_importance = as.data.frame(rf_model[["importance"]])
+
+# mse for regression
+## scale... for permutation, the measures are divided by their standard errors??
+var_importance_3 = importance(rf_model, type = 1,scale = TRUE)
+
+var_importance_3_df = as.data.frame(var_importance_3)
+
+
+
 
 
 
@@ -413,10 +491,10 @@ ggplot(corr_attrib_geol, aes(x = term, y = 1, color = value, size = abs(value)))
 #### CROSS-FOLD VALIDATION ####
 
 ## Set seed for reproducibility
-set.seed(123)
+set.seed(42)
 
 ## Define repeated cross validation with 5 folds and three repeats
-repeat_cv <- trainControl(method='repeatedcv', number=5, repeats=3)
+repeat_cv <- trainControl(method='repeatedcv', number=10, repeats=3)
 
 ## Split the data so that we use 70% of it for training
 # train_index <- createDataPartition(y=iris$Species, p=0.7, list=FALSE)
@@ -425,9 +503,6 @@ train_index <- createDataPartition(y=rf_df$baseflow_index, p=0.7, list=FALSE)
 ## Subset the data
 training_set <- rf_df[train_index, ]
 testing_set <- rf_df[-train_index, ]
-
-## Set seed for reproducibility
-set.seed(123)
 
 ## Train a random forest model
 forest <- train(
