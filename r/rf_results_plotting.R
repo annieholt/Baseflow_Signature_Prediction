@@ -146,7 +146,7 @@ ggplot(rf_performance_2, aes(x = sig, y = variable, color = IncMSE_Category, siz
   ) +
   guides(size = FALSE)
 
-# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_plus_v3_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest/figures_final/rf_v3_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
 
 
 
