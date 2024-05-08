@@ -11,6 +11,17 @@ library(sf)
 
 #### Import datasets ####
 
+sigs = read.csv()
+
+camels_caravan_attribs
+
+camels_caravan_attribs_v2
+
+camels_cararvan_attribs_v3
+
+camels_new_attribs
+
+
 
 #### Adjust datasets for different runs ####
 
