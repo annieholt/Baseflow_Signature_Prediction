@@ -28,7 +28,7 @@ sigs_final = sigs_all %>%
 # camels_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv")
 camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v3.csv", colClasses = c(gauge_id = "character"))
 
-# camels_new_attribs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_new_attribs.csv", colClasses = c(gauge_id = "character"))
+camels_new_attribs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_new_attribs.csv", colClasses = c(gauge_id = "character"))
 
 # camels_caravan_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v2.csv", colClasses = c(gauge_id = "character"))
 # camels_caravan_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v3.csv", colClasses = c(gauge_id = "character"))
@@ -36,20 +36,22 @@ camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/cam
 
 #### Adjust datasets for different runs ####
 
-rf_input_attribs = camels_attribs_v3
+rf_input_attribs = camels_attribs_v3 %>% 
+  left_join(camels_new_attribs %>% select(gauge_id, geol_av_age_ma), by = "gauge_id")
+  
 
 
 #### Random forests, with cross validation for evaluation ####
 
 # list of predictor variables (signatures) to loop through
 
-# sigs_list = c('EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
-#               'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_T0', 
-#               'First_Recession_Slope', 'Mid_Recession_Slope','EventRR_TotalRR_ratio',
-#               'VariabilityIndex', 'BaseflowRecessionK',
-#               'BFI', 'BFI_90')
+sigs_list = c('EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
+              'RecessionParameters_a', 'RecessionParameters_b', 'RecessionParameters_T0',
+              'First_Recession_Slope', 'Mid_Recession_Slope','EventRR_TotalRR_ratio',
+              'VariabilityIndex', 'BaseflowRecessionK',
+              'BFI', 'BFI_90')
 
-sigs_list = c('EventRR')
+# sigs_list = c('EventRR')
 
 rf_out_var_importance <- list()
 rf_out_r2 <- list()
@@ -86,7 +88,7 @@ for(sig in sigs_list){
     # Random forest method
     method = 'rf',
     # metric to evaluate model performance
-    metric = 'Rsquared',
+    metric = 'MSE',
     # metric = 'RMSE',
     # Number of trees
     # adding the repeated cross validation
@@ -119,5 +121,12 @@ for(sig in sigs_list){
   
   }
 
-all_var_importance <- bind_rows(rf_out_var_importance)
-all_r2 = bind_rows(rf_out_r2)
+# all_var_importance <- bind_rows(rf_out_var_importance)
+# all_r2 = bind_rows(rf_out_r2) %>%
+#   pivot_longer(everything(), names_to = "signature", values_to = "r_squared")
+# 
+# write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_var_importance.csv",
+#           row.names = FALSE)
+# 
+# write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_r_squared.csv",
+#           row.names = FALSE)
