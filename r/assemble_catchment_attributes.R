@@ -15,19 +15,19 @@ library(sf)
 
 #### Hydrologic Signatures ####
 
-sigs_c = read.csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels_v2.csv', colClasses = c(gauge_id = "character"))
-
-# choosing a subset, based on recommendations from McMillan et al. 2022
-# (McMillan et al. 2022 found Storage Fraction was not very reliable for large samples; Average Storage more reliable)
-# this dataset also includes BFI90, as recommended by Gnann et al., 2021
-
-sigs_c_2 = sigs_c %>% 
-  select(gauge_id, TotalRR, RR_Seasonality, EventRR, Recession_a_Seasonality,
-         AverageStorage, RecessionParameters_a, RecessionParameters_b, RecessionParameters_c, MRC_num_segments,
-         First_Recession_Slope, Mid_Recession_Slope, Spearmans_rho, EventRR_TotalRR_ratio,
-         VariabilityIndex, BFI, BFI_90, BaseflowRecessionK) %>% 
-  as.data.frame() %>% 
-  rename(RecessionParameters_T0 = RecessionParameters_c)
+# sigs_c = read.csv('E:/SDSU_GEOG/Thesis/Data/Signatures/sigs_camels_v2.csv', colClasses = c(gauge_id = "character"))
+# 
+# # choosing a subset, based on recommendations from McMillan et al. 2022
+# # (McMillan et al. 2022 found Storage Fraction was not very reliable for large samples; Average Storage more reliable)
+# # this dataset also includes BFI90, as recommended by Gnann et al., 2021
+# 
+# sigs_c_2 = sigs_c %>% 
+#   select(gauge_id, TotalRR, RR_Seasonality, EventRR, Recession_a_Seasonality,
+#          AverageStorage, RecessionParameters_a, RecessionParameters_b, RecessionParameters_c, MRC_num_segments,
+#          First_Recession_Slope, Mid_Recession_Slope, Spearmans_rho, EventRR_TotalRR_ratio,
+#          VariabilityIndex, BFI, BFI_90, BaseflowRecessionK) %>% 
+#   as.data.frame() %>% 
+#   rename(RecessionParameters_T0 = RecessionParameters_c)
 
 
 #### New Attributes (Wetland area fractions and geologic age) ####
