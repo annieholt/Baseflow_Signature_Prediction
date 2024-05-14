@@ -25,10 +25,12 @@ sigs_final = sigs_all %>%
   as.data.frame() %>% 
   rename(RecessionParameters_T0 = RecessionParameters_c)
 
-# camels_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv")
-camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v3.csv", colClasses = c(gauge_id = "character"))
+# camels_attribs_addor = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_addor18.csv", colClasses = c(gauge_id = "character"))
+camels_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv", colClasses = c(gauge_id = "character"))
+# camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v3.csv", colClasses = c(gauge_id = "character"))
 
 camels_new_attribs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_new_attribs.csv", colClasses = c(gauge_id = "character"))
+camels_eco = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_ecoregions.csv", colClasses = c(gauge_id = "character"))
 
 # camels_caravan_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v2.csv", colClasses = c(gauge_id = "character"))
 # camels_caravan_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v3.csv", colClasses = c(gauge_id = "character"))
@@ -36,8 +38,15 @@ camels_new_attribs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/ca
 
 #### Adjust datasets for different runs ####
 
-rf_input_attribs = camels_attribs_v3 %>% 
-  left_join(camels_new_attribs %>% select(gauge_id, geol_av_age_ma), by = "gauge_id")
+rf_input_attribs = camels_attribs_v2 %>% 
+  left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma, fresh_no_giw), by = "gauge_id") %>% 
+  filter(fresh_no_giw > 0.05) %>% 
+  select(-giw_frac)
+
+
+  # left_join(camels_eco, by = "gauge_id") %>% 
+  # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>% 
+  # select(-NA_L1KEY)
   
 
 
@@ -121,12 +130,12 @@ for(sig in sigs_list){
   
   }
 
-# all_var_importance <- bind_rows(rf_out_var_importance)
-# all_r2 = bind_rows(rf_out_r2) %>%
-#   pivot_longer(everything(), names_to = "signature", values_to = "r_squared")
-# 
-# write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_var_importance.csv",
+all_var_importance <- bind_rows(rf_out_var_importance)
+all_r2 = bind_rows(rf_out_r2) %>%
+  pivot_longer(everything(), names_to = "signature", values_to = "r_squared")
+
+# write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_fresh_0.05_fresh_var_importance.csv",
 #           row.names = FALSE)
 # 
-# write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_r_squared.csv",
+# write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_fresh_0.05_fresh_r_squared.csv",
 #           row.names = FALSE)
