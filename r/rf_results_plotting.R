@@ -5,29 +5,44 @@ library(cowplot)
 
 # CAMELS attribute datasets
 # Addor 2018
-rf_camels_addor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_var_importance.csv")
-rf_camels_addor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_r_squared.csv")
+# rf_camels_addor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_var_importance.csv")
+# rf_camels_addor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_r_squared.csv")
 
 
 # version 2: Addor, and no categorical variables (dom land cover, dom lithology)
 rf_camels_v2_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_var_importance.csv")
 rf_camels_v2_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_r_squared.csv")
-rf_camels_v2_geol_av_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_av_var_importance.csv")
-rf_camels_v2_geol_av_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_av_r_squared.csv")
-rf_camels_v2_giw_frac_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_var_importance.csv")
-rf_camels_v2_giw_frac_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_r_squared.csv")
-# version 2, but only in Northeastern forest region
-rf_camels_v2_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northfor_var_importance.csv")
-rf_camels_v2_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northfor_r_squared.csv")
+
+
+# rf_camels_v2_geol_av_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_av_var_importance.csv")
+# rf_camels_v2_geol_av_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_av_r_squared.csv")
+# rf_camels_v2_giw_frac_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_var_importance.csv")
+# rf_camels_v2_giw_frac_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_r_squared.csv")
+
+rf_camels_v2_new_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_var_importance.csv")
+rf_camels_v2_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_r_squared.csv")
+
+# version 2, but only in Northeastern forest region; with and without new attributes
+rf_camels_v2_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_var_importance.csv")
+rf_camels_v2_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_r_squared.csv")
 rf_camels_v2_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_var_importance.csv")
 rf_camels_v2_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_r_squared.csv")
+rf_camels_v2_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_var_importance.csv")
+rf_camels_v2_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_r_squared.csv")
 
+
+rf_camels_v2_new_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_var_importance.csv")
+rf_camels_v2_new_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_r_squared.csv")
+rf_camels_v2_new_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_var_importance.csv")
+rf_camels_v2_new_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_r_squared.csv")
+rf_camels_v2_new_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_var_importance.csv")
+rf_camels_v2_new_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_r_squared.csv")
 
 # # version 3: removing variables with correlation greater than 0.7 before modeling
-rf_camels_v3_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_var_importance.csv")
-rf_camels_v3_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_r_squared.csv")
-rf_camels_v3_geol_av_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_var_importance.csv")
-rf_camels_v3_geol_av_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_r_squared.csv")
+# rf_camels_v3_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_var_importance.csv")
+# rf_camels_v3_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_r_squared.csv")
+# rf_camels_v3_geol_av_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_var_importance.csv")
+# rf_camels_v3_geol_av_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_geol_av_r_squared.csv")
 # rf_camels_v3_giw_frac_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_giw_frac_var_importance.csv")
 # rf_camels_v3_giw_frac_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_giw_frac_r_squared.csv")
 # 
@@ -45,12 +60,19 @@ rf_camels_v3_geol_av_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outpu
 #### Performance Plotting ####
 
 rf_camels_v2_r_all = rf_camels_v2_r %>% 
-  mutate(attrib_version = "camels") %>% 
-  bind_rows(rf_camels_v2_geol_av_r %>% mutate(attrib_version = "camels_geol_av")) %>% 
-  bind_rows(rf_camels_v2_giw_frac_r %>% mutate(attrib_version = "camels_giw_frac")) %>% 
-  bind_rows(rf_camels_v2_northfor_r %>% mutate(attrib_version = "camels_northfor")) %>% 
-  filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
-                          "Recession_a_Seasonality"))
+  mutate(attrib_version = "camels") %>%
+  # bind_rows(rf_camels_v2_new_r %>% mutate(attrib_version = "camels_plusnew")) %>% 
+  # bind_rows(rf_camels_v2_northfor_r %>% mutate(attrib_version = "camels_northfor")) %>%
+  # bind_rows(rf_camels_v2_greatplains_r %>% mutate(attrib_version = "camels_greatplains")) %>%
+  bind_rows(rf_camels_v2_easttemp_r %>% mutate(attrib_version = "camels_easttemp")) %>%
+  # bind_rows(rf_camels_v2_new_northfor_r %>% mutate(attrib_version = "camels_northfor_plusnew")) %>%
+  bind_rows(rf_camels_v2_new_easttemp_r %>% mutate(attrib_version = "camels_easttemp_plusnew")) %>%
+  # bind_rows(rf_camels_v2_new_greatplains_r %>% mutate(attrib_version = "camels_greatplains_plusnew")) %>% 
+  # filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
+  #                         "Recession_a_Seasonality"))
+  filter(signature != "RecessionParameters_a")
+  
+  filter(signature == "BFI" | signature == "BFI_90")
 
 # rf_camels_v3_r_all = rf_camels_v3_r %>% 
 #   mutate(attrib_version = "camels") %>% 
@@ -82,6 +104,7 @@ ggplot(rf_camels_v2_r_all, aes(x = signature, y = r_squared, fill = attrib_versi
     title = NULL
   ) +
   scale_y_continuous(limits = c(0, 1)) +
+  # scale_fill_manual(name = "RF Model Performance", values = c("camels" = "lightgrey", "camels_plusnew" = "darkgrey"))+
   theme_minimal()+
   theme(
     plot.title = element_text(size = 24),
@@ -98,7 +121,7 @@ ggplot(rf_camels_v2_r_all, aes(x = signature, y = r_squared, fill = attrib_versi
   #                   values = c("green", "orange","blue"))
 
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/camels_v2_r_squared_subset.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/camels_v2_r_squared.png", width = 10.5, height = 6, dpi = 300,bg = "white")
 
 
 # trying slightly different aesthetics
@@ -123,13 +146,51 @@ ggplot(rf_performance_r2, aes(x = sig, y = cv_r2)) +
 
 
 
-importance_plotting = rf_camels_v2_geol_av_imp %>% 
-  filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
-                        "Recession_a_Seasonality"))
+importance_plotting = rf_camels_v2_new_imp %>% 
+  # filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
+  #                         "Recession_a_Seasonality")) %>% 
+  # filter(signature == "BFI_90") %>%
+  mutate(color = case_when(predictor == "geol_av_age_ma" ~ "red",
+                           predictor == "giw_frac" ~ "blue", 
+                           predictor %in% c("p_mean", "pet_mean", "p_seasonality", "frac_snow", "aridity", "high_prec_freq", 
+                                            "high_prec_dur", "low_prec_freq", "low_prec_dur") ~ "darkgrey",
+                           TRUE ~ "lightgrey"))
+  
+  # rf_camels_v2_geol_av_imp %>% 
+  # filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
+  #                       "Recession_a_Seasonality"))
 
   # arrange(signature, desc(X.IncMSE)) %>%  # Arrange data by response variable and %IncMSE in descending order
   # group_by(signature) %>%  # Group data by response variable
   # slice_head(n = 5)
+
+
+
+incmse_plot_list <- list()
+for (sig in unique(importance_plotting$signature)) {
+  # Create ggplot for the current signature
+  p <- ggplot(importance_plotting[importance_plotting$signature == sig, ], aes(x = X.IncMSE, y = reorder(predictor, X.IncMSE),
+                                                                               fill = color)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = c("blue" = "blue","red"= "red", "darkgrey" = "grey45", "lightgrey"= "lightgrey")) +
+    labs(x = "%IncMSE", y = NULL) +
+    # xlim(0, 35) +
+    ggtitle(paste(sig)) +
+    # ggtitle(paste(sig, "(Northwest Forested)")) +
+    theme_minimal() +
+    theme(legend.position = "none")  # Remove legend for individual plots
+  
+  # Add the ggplot to the list
+  incmse_plot_list[[sig]] <- p
+}
+incmse_final_plot <- plot_grid(plotlist = incmse_plot_list, ncol = 5)  # Adjust ncol as needed
+
+print(incmse_final_plot)
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/rf_camels_v2_geol_giw_bar_incmse.png", width = 10, height = 10, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/rf_camels_v2_geol_giw_northwestfor_BFI90_bar_incmse.png", width = 4, height = 4, dpi = 300,bg = "white")
+
+
+
 
 
 # attributes
@@ -137,10 +198,13 @@ attributes = unique(rf_camels_v2_easttemp_imp$predictor)
 desired_order = rev(c("p_mean", "pet_mean", "p_seasonality", "frac_snow", "aridity", "high_prec_freq", 
                   "high_prec_dur", "low_prec_freq", "low_prec_dur", 
                   "elev_mean", "slope_mean", "area_gages2", 
-                  "frac_forest", "lai_max", "gvf_max", "root_depth_50", "root_depth_99",
+                  "frac_forest", "lai_max", "gvf_max", "root_depth_50", "root_depth_99", "evergreen_needleleaf",
                   "soil_depth_pelletier", "soil_depth_statsgo", "max_water_content", "sand_frac",
                   "silt_frac", "clay_frac", "water_frac", "organic_frac", "other_frac",
-                  "carbonate_rocks_frac", "geol_porostiy", "geol_permeability", "giw_frac"))
+                  "carbonate_rocks_frac", "geol_porostiy", "geol_permeability", "igneous_volcanic", "sedimentary_clastic",
+                  "sedimentary_carbonate", "metamorphics", "unconsolidated",
+                  "geol_av_age_ma",
+                  "giw_frac"))
 
 # # updated list of attributes
 # desired_order <- rev(c("p_mean", "pet_mean", "frac_snow", "seasonality", "high_prec_freq", "high_prec_dur",
@@ -216,27 +280,54 @@ ggplot(importance_plotting, aes(x = X.IncMSE, y = predictor, fill = reorder(pred
   theme_minimal()
 
 
-incmse_plot_list <- list()
 
-for (sig in unique(importance_plotting$signature)) {
-  # Create ggplot for the current signature
-  p <- ggplot(importance_plotting[importance_plotting$signature == sig, ], aes(x = X.IncMSE, y = reorder(predictor, X.IncMSE))) +
-    geom_bar(stat = "identity") +
-    labs(x = "%IncMSE", y = NULL) +
-    ggtitle(paste("Signature:", sig)) +
-    theme_minimal() +
-    theme(legend.position = "none")  # Remove legend for individual plots
-  
-  # Add the ggplot to the list
-  incmse_plot_list[[sig]] <- p
+#### PREDICTED SIGNATURE DISTRIBUTIONS #####
+library(sf)
+conus <- st_read('E:/SDSU_GEOG/Thesis/Data/US states/conus_states.shp')
+hysets_sigs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/hysets_caravan_v2_geol_giw_signatures.csv",
+                       colClasses = c(gauge_id = "character"))
+hysets_poly = st_read('E:/SDSU_GEOG/Thesis/Data/NWI_hysets/nwi_hysets_metrics.shp') %>% 
+  select(gauge_id,geometry)
+hysets_centroid <- st_centroid(hysets_poly)
+
+hyset_sigs_centroid = hysets_centroid %>% 
+  left_join(hysets_sigs, by = "gauge_id")
+
+# ggplot() +
+#   geom_sf(data = conus, color = "white", fill = "grey") +  # Plot polygon boundaries, color by variable
+#   geom_sf(data = hyset_sigs_centroid, aes(fill = prediction), shape = 21, color = "darkgrey", size = 3, alpha = 1) +
+#   scale_fill_distiller(palette = "Spectral", direction = 1, name = NULL)+
+#   # scale_fill_gradient(low = "red", high = "blue4") +
+#   ggtitle("Signature") +
+#   theme_void()+
+#   theme(
+#     plot.title = element_text(size = 30, hjust = 0.5),  # Adjust title size and centering
+#     legend.key.size = unit(2, "lines"),  # Adjust the size of the legend keys
+#     legend.title = element_text(size = 24),  # Adjust the size of the legend title
+#     legend.text = element_text(size = 24)# Adjust the size of the legend text
+#   )
+
+
+sig_map_plot_list <- list()
+for (sig in unique(hyset_sigs_centroid$signature)) {
+  p = ggplot() +
+    geom_sf(data = conus, color = "white", fill = "grey") +  # Plot polygon boundaries, color by variable
+    geom_sf(data = hyset_sigs_centroid[hyset_sigs_centroid$signature == sig, ],
+            aes(fill = prediction), shape = 21, color = "darkgrey", size = 3, alpha = 1) +
+    scale_fill_distiller(palette = "Spectral", direction = 1, name = NULL)+
+    # scale_fill_gradient(low = "red", high = "blue4") +
+    ggtitle(sig) +
+    theme_void()+
+    theme(
+      plot.title = element_text(size = 30, hjust = 0.5),  # Adjust title size and centering
+      legend.key.size = unit(2, "lines"),  # Adjust the size of the legend keys
+      legend.title = element_text(size = 24),  # Adjust the size of the legend title
+      legend.text = element_text(size = 24)# Adjust the size of the legend text
+    )
+  sig_map_plot_list[[sig]] <- p
 }
-incmse_final_plot <- plot_grid(plotlist = incmse_plot_list, ncol = 5)  # Adjust ncol as needed
-
-print(incmse_final_plot)
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/rf_camels_v2_bar_incmse.png", width = 10, height = 8, dpi = 300,bg = "white")
-
-
-
+sig_map_final_plot <- plot_grid(plotlist = sig_map_plot_list, ncol = 2)  # Adjust ncol as needed
+print(sig_map_final_plot)
 
 
 #### Performance Plotting; OLD VERSION ####
