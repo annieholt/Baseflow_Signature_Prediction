@@ -7,6 +7,8 @@ library(caret)
 library(rpart)
 library(rpart.plot)
 library(sf)
+library(mltools)
+library(data.table)
 
 
 #### Import datasets ####
@@ -25,7 +27,7 @@ sigs_final = sigs_all %>%
   as.data.frame() %>% 
   rename(RecessionParameters_T0 = RecessionParameters_c)
 
-# camels_attribs_addor = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_addor18.csv", colClasses = c(gauge_id = "character"))
+camels_attribs_addor = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_addor18.csv", colClasses = c(gauge_id = "character"))
 camels_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv", colClasses = c(gauge_id = "character"))
 # camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v3.csv", colClasses = c(gauge_id = "character"))
 
@@ -38,16 +40,46 @@ camels_eco = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_eco
 
 #### Adjust datasets for different runs ####
 
+# attribs_categorical = camels_attribs_addor %>% 
+#   select(gauge_id, dom_land_cover) %>% 
+#   left_join(camels_new_attribs %>% select(gauge_id, major_lith), by = "gauge_id") %>% 
+#   mutate(dom_land_cover = as.factor(dom_land_cover)) %>% 
+#   mutate(major_lith = as.factor(major_lith))
+# 
+# attribs_categorical_table <- data.table(attribs_categorical)
+# attribs_categorical_encoded <- one_hot(attribs_categorical_table, cols = c("dom_land_cover", "major_lith"))
+
 rf_input_attribs = camels_attribs_v2 %>% 
-  left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma, fresh_no_giw), by = "gauge_id") %>% 
-  filter(fresh_no_giw > 0.05) %>% 
-  select(-giw_frac)
-
-
-  # left_join(camels_eco, by = "gauge_id") %>% 
-  # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>% 
-  # select(-NA_L1KEY)
+  # left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id") %>% 
+  select(-water_frac, -organic_frac) %>% 
+  left_join(camels_eco, by = "gauge_id") %>% 
+  # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>%
+  # filter(NA_L1KEY =="8  EASTERN TEMPERATE FORESTS") %>%
+  filter(NA_L1KEY =="9  GREAT PLAINS") %>%
+  select(-NA_L1KEY)
   
+  # left_join(camels_attribs_addor %>% select(gauge_id, dom_land_cover), by = "gauge_id") %>% 
+  # left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma, major_lith), by = "gauge_id") %>% 
+  # mutate(evergreen_needleleaf = ifelse(dom_land_cover == "    Evergreen Needleleaf Forest", 1, 0)) %>% 
+  # mutate(igneous_volcanic = ifelse(major_lith == "Igneous, volcanic", 1, 0)) %>% 
+  # mutate(sedimentary_clastic = ifelse(major_lith == "Sedimentary, clastic", 1, 0)) %>% 
+  # mutate(sedimentary_carbonate = ifelse(major_lith == "Sedimentary, carbonate", 1, 0)) %>% 
+  # mutate(metamorphics = ifelse(grepl('Metamorphic', major_lith), 1, 0)) %>% 
+  # mutate(unconsolidated = ifelse(major_lith == "Unconsolidated, undifferentiated", 1, 0)) %>% 
+  # select(-dom_land_cover, -major_lith)
+
+
+
+  # filter(fresh_no_giw > 0.05) %>% 
+  # select(-giw_frac)
+  # filter(!grepl('Igneous|Sedimentary, clastic', major_lith))
+
+
+  # left_join(camels_eco, by = "gauge_id") %>%
+  # # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>%
+  # filter(NA_L1KEY =="8  EASTERN TEMPERATE FORESTS") %>%
+  # select(-NA_L1KEY)
+
 
 
 #### Random forests, with cross validation for evaluation ####
@@ -134,8 +166,8 @@ all_var_importance <- bind_rows(rf_out_var_importance)
 all_r2 = bind_rows(rf_out_r2) %>%
   pivot_longer(everything(), names_to = "signature", values_to = "r_squared")
 
-# write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_fresh_0.05_fresh_var_importance.csv",
-#           row.names = FALSE)
-# 
-# write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_fresh_0.05_fresh_r_squared.csv",
-#           row.names = FALSE)
+write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_importance.csv",
+          row.names = FALSE)
+
+write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_rsquared.csv",
+          row.names = FALSE)
