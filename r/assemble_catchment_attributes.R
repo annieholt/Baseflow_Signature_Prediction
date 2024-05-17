@@ -268,27 +268,39 @@ nwi_metrics_hysets = nwi_hysets %>%
   mutate(other = ifelse(is.na(other), 0, other)) %>% 
   mutate(fresh_no_giw = fresh + lake - area_frac)
 
-geol_hysets = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Hysets/sgmc_hysets_metrics_age_majorlith.shp')
+geol_hysets = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Hysets/sgmc_hysets_metrics_age_weighted.shp')
+geol_hysets_lith = st_read('E:/SDSU_GEOG/Thesis/Data/Geology_outputs/Hysets/sgmc_hysets_metrics_age_majorlith.shp')
 
-geol_all = geol_c %>% 
+geol_all = geol_c %>%
   bind_rows(geol_hysets)
 
-hysets_caravan = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_caravan_camels.csv")
-hysets_caravan_hydroatlas = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_hydroatlas_camels.csv")
-hysets_caravan_other = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_other_camels.csv")
+hysets_caravan = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_caravan_hysets.csv")
+hysets_caravan_hydroatlas = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_hydroatlas_hysets.csv")
+hysets_caravan_other = read_csv("E:/SDSU_GEOG/Thesis/Data/Caravan_1.4/attributes/hysets/attributes_other_hysets.csv")
 
 
 hysets_caravan_attribs_v2 = hysets_caravan_hydroatlas %>% 
   select(gauge_id, ele_mt_smn, slp_dg_sav,
          for_pc_sse,
-         cly_pc_sav, slt_pc_sav, snd_pc_sav, soc_th_sav, kar_pc_sse, swc_pc_syr) %>% 
+         cly_pc_sav, slt_pc_sav, snd_pc_sav, kar_pc_sse) %>% 
   left_join(hysets_caravan, by = "gauge_id") %>% 
   left_join(hysets_caravan_other %>% select(gauge_id, area), by = "gauge_id") %>% 
-  mutate(gauge_id = gsub("^camels_", "", gauge_id))
+  mutate(gauge_id = gsub("^hysets_", "", gauge_id)) %>% 
+  select(-seasonality, -moisture_index)
 
 # joining new attribute data alongside caravan attribute dataset... MAY UPDATE LATER?
-hysets_caravan_new
-
+# though there are many hyets, just retain ones in the CONUS where I have also calculated new metrics
+hysets_caravan_new = nwi_metrics_hysets %>% 
+  as.data.frame() %>% 
+  select(gauge_id, area_frac) %>% 
+  rename(giw_frac = area_frac) %>% 
+  left_join(geol_hysets %>% as.data.frame() %>% select(gauge_id, av_age_w), by = "gauge_id") %>% 
+  rename(geol_av_age_ma = av_age_w) %>% 
+  left_join(hysets_caravan_attribs_v2, by = "gauge_id") %>% 
+  drop_na()
+  
+# write.csv(hysets_caravan_new, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/hysets_caravan_attribs_v2.csv",
+#           row.names = FALSE)
 
 #### new attribute/caravan attribute correlations, for more specific plots ####
 
