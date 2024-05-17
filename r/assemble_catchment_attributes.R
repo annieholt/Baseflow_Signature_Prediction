@@ -189,7 +189,13 @@ camels_caravan_attribs_v2 = camels_caravan_hydroatlas %>%
 #### Correlation analysis (for plotting and final V3 attribute selections) ####
 
 # Spearman correlation, between camels attributes
-correlation_camels_attribs = cor(camels_attribs_v2 %>% select(-gauge_id) %>% drop_na(), method = "spearman")
+correlation_test = camels_attribs_v2 %>% 
+  left_join(new_attrib %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id")
+
+correlation_camels_attribs = cor(correlation_test %>% select(-gauge_id) %>% drop_na(), method = "spearman")
+
+cor_example <- cor.test(correlation_test$geol_av_age_ma, correlation_test$geol_porostiy, method = "spearman", exact = FALSE)
+
 
 # based on results above...
 # dropped variables if correlation greater than 0.7; also removed root depth due to NA values
@@ -232,16 +238,16 @@ print(scatterplot)
 # ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/camels_attributes_correlations.png", width = 10.5, height = 8, dpi = 300,bg = "white")
 
 
-# # hierarchical clustering; this is just experimental for now
-# hc <- hclust(dist(correlation_camels_attribs))
-# correlation_matrix_reordered <- correlation_camels_attribs[hc$order, hc$order]
-# heatmap(correlation_matrix_reordered,
-#         Rowv = as.dendrogram(hc),
-#         Colv = as.dendrogram(hc),
-#         col = heat.colors(10),   
-#         scale = "none",          
-#         margins = c(8, 8),       
-#         main = "Attribute Correlations")  
+# hierarchical clustering; this is just experimental for now
+hc <- hclust(dist(correlation_camels_attribs))
+correlation_matrix_reordered <- correlation_camels_attribs[hc$order, hc$order]
+heatmap(correlation_matrix_reordered,
+        Rowv = as.dendrogram(hc),
+        Colv = as.dendrogram(hc),
+        col = heat.colors(10),
+        scale = "none",
+        margins = c(8, 8),
+        main = "Attribute Correlations")
 
 
 #### New attributes and CARAVAN attributes, Hysets watersheds ####
