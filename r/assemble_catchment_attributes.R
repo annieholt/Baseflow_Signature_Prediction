@@ -131,6 +131,14 @@ camels_attribs_v2 = camels_attribs %>%
   select(-dom_land_cover_frac, -dom_land_cover, -geol_1st_class, -glim_1st_class_frac,
          -high_prec_timing, -low_prec_timing)
 
+camels_final = camels_attribs_v2 %>% 
+  select(-water_frac, -organic_frac) %>%
+  select(-pet_mean, -p_mean) %>%
+  select(-high_prec_freq, -high_prec_dur) %>%
+  select(-soil_depth_pelletier) %>%
+  select(-lai_max, -gvf_max)
+
+
 # write.csv(camels_attribs_v2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv",
 #           row.names = FALSE)
 
@@ -190,6 +198,11 @@ camels_caravan_attribs_v2 = camels_caravan_hydroatlas %>%
 
 # Spearman correlation, between camels attributes
 correlation_test = camels_attribs_v2 %>% 
+  select(-water_frac, -organic_frac) %>% 
+  select(-p_mean, -pet_mean) %>% 
+  select(-high_prec_freq, -high_prec_dur) %>% 
+  select(-soil_depth_pelletier) %>% 
+  select(-lai_max, -gvf_max) %>% 
   left_join(new_attrib %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id")
 
 correlation_camels_attribs = cor(correlation_test %>% select(-gauge_id) %>% drop_na(), method = "spearman")
@@ -241,13 +254,23 @@ print(scatterplot)
 # hierarchical clustering; this is just experimental for now
 hc <- hclust(dist(correlation_camels_attribs))
 correlation_matrix_reordered <- correlation_camels_attribs[hc$order, hc$order]
+# Define a custom color palette with a larger range
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(100)
+
+# Define color breaks from -1 to 1
+breaks <- seq(-1, 1, length.out = 101)
+
+# Create the heatmap without a legend
+par(mar = c(5, 4, 4, 2) + 0.1) # Adjust margins if necessary
 heatmap(correlation_matrix_reordered,
         Rowv = as.dendrogram(hc),
         Colv = as.dendrogram(hc),
-        col = heat.colors(10),
+        col = custom_colors,
+        breaks = breaks,
         scale = "none",
-        margins = c(8, 8),
-        main = "Attribute Correlations")
+        margins = c(10, 10),
+        main = NULL)
+
 
 
 #### New attributes and CARAVAN attributes, Hysets watersheds ####
