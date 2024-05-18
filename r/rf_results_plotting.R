@@ -56,8 +56,23 @@ rf_camels_v2_new_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest
 # rf_caravan_v3_giw_frac_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_caravan_v3_giw_frac_r_squared.csv")
 # 
 
+#### FINAL VERSIONS ####
+
+rf_camels_new_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_aridity_geol_giw_var_importance.csv")
+rf_camels_new_east_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_easttemp_northfor_geol_giw_var_importance.csv")
+
+rf_caravan_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_r_squared.csv")
+rf_camels_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_aridity_geol_giw_r_squared.csv")
+rf_camels_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_r_squared.csv")
 
 #### Performance Plotting ####
+
+rf_r_all = rf_camels_r %>% 
+  mutate(attrib_version = "camels") %>%
+  bind_rows(rf_camels_new_r %>% mutate(attrib_version = "camels_plusnew")) %>%
+  bind_rows(rf_caravan_new_r %>% mutate(attrib_version = "caravan_plusnew")) %>% 
+  filter(signature != "RecessionParameters_a")
+
 
 rf_camels_v2_r_all = rf_camels_v2_r %>% 
   mutate(attrib_version = "camels") %>%
@@ -96,7 +111,7 @@ rf_camels = rf_camels_v3_r %>%
                           "Recession_a_Seasonality"))
 
 # boxplot, R2 on y axis, signature on x axis
-ggplot(rf_camels_v2_r_all, aes(x = signature, y = r_squared, fill = attrib_version)) +
+ggplot(rf_r_all, aes(x = signature, y = r_squared, fill = attrib_version)) +
   geom_col(position = "dodge", width = 0.6) +
   labs(
     y = "Mean R2",
@@ -104,7 +119,8 @@ ggplot(rf_camels_v2_r_all, aes(x = signature, y = r_squared, fill = attrib_versi
     title = NULL
   ) +
   scale_y_continuous(limits = c(0, 1)) +
-  # scale_fill_manual(name = "RF Model Performance", values = c("camels" = "lightgrey", "camels_plusnew" = "darkgrey"))+
+  scale_fill_manual(name = "RF Model Performance", values = c("camels" = "lightgrey", "camels_plusnew" = "grey40",
+                                                              "caravan_plusnew" = "darkgrey"))+
   theme_minimal()+
   theme(
     plot.title = element_text(size = 24),
@@ -121,7 +137,7 @@ ggplot(rf_camels_v2_r_all, aes(x = signature, y = r_squared, fill = attrib_versi
   #                   values = c("green", "orange","blue"))
 
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/camels_v2_r_squared.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/camels_caravan_r_squared.png", width = 10.5, height = 6, dpi = 300,bg = "white")
 
 
 # trying slightly different aesthetics
@@ -146,10 +162,11 @@ ggplot(rf_performance_r2, aes(x = sig, y = cv_r2)) +
 
 
 
-importance_plotting = rf_camels_v2_new_imp %>% 
+importance_plotting = rf_camels_new_east_imp %>% 
+  filter(signature != "RecessionParameters_a") %>% 
   # filter(signature %in% c('AverageStorage', "BFI", "BFI_90", "BaseflowRecessionK", "TotalRR",
-  #                         "Recession_a_Seasonality")) %>% 
-  # filter(signature == "BFI_90") %>%
+  #                         "Recession_a_Seasonality")) %>%
+  # filter(signature == "BFI") %>%
   mutate(color = case_when(predictor == "geol_av_age_ma" ~ "red",
                            predictor == "giw_frac" ~ "blue", 
                            predictor %in% c("p_mean", "pet_mean", "p_seasonality", "frac_snow", "aridity", "high_prec_freq", 
@@ -176,18 +193,19 @@ for (sig in unique(importance_plotting$signature)) {
     labs(x = "%IncMSE", y = NULL) +
     # xlim(0, 35) +
     ggtitle(paste(sig)) +
-    # ggtitle(paste(sig, "(Northwest Forested)")) +
+    # ggtitle(paste(sig, "(Northeastern Forested)")) +
     theme_minimal() +
     theme(legend.position = "none")  # Remove legend for individual plots
   
   # Add the ggplot to the list
   incmse_plot_list[[sig]] <- p
 }
-incmse_final_plot <- plot_grid(plotlist = incmse_plot_list, ncol = 5)  # Adjust ncol as needed
+incmse_final_plot <- plot_grid(plotlist = incmse_plot_list, ncol = 4)  # Adjust ncol as needed
 
 print(incmse_final_plot)
 # ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/rf_camels_v2_geol_giw_bar_incmse.png", width = 10, height = 10, dpi = 300,bg = "white")
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures/rf_camels_v2_geol_giw_northwestfor_BFI90_bar_incmse.png", width = 4, height = 4, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/rf_camels_geol_giw_eco_BFI_bar_incmse.png", width = 4, height = 4, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/rf_camels_northeast_geol_giw_bar_incmse.png", width = 14, height = 18, dpi = 300,bg = "white")
 
 
 
@@ -284,8 +302,10 @@ ggplot(importance_plotting, aes(x = X.IncMSE, y = predictor, fill = reorder(pred
 #### PREDICTED SIGNATURE DISTRIBUTIONS #####
 library(sf)
 conus <- st_read('E:/SDSU_GEOG/Thesis/Data/US states/conus_states.shp')
-hysets_sigs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/hysets_caravan_v2_geol_giw_signatures.csv",
-                       colClasses = c(gauge_id = "character"))
+hysets_sigs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_predicted_signatures.csv",
+                       colClasses = c(gauge_id = "character")) %>% 
+  filter(signature != "RecessionParameters_a")
+
 hysets_poly = st_read('E:/SDSU_GEOG/Thesis/Data/NWI_hysets/nwi_hysets_metrics.shp') %>% 
   select(gauge_id,geometry)
 hysets_centroid <- st_centroid(hysets_poly)
@@ -307,27 +327,40 @@ hyset_sigs_centroid = hysets_centroid %>%
 #     legend.text = element_text(size = 24)# Adjust the size of the legend text
 #   )
 
+signature = c('EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality', 'AverageStorage',
+              'RecessionParameters_b', 'RecessionParameters_T0',
+              'First_Recession_Slope', 'Mid_Recession_Slope','EventRR_TotalRR_ratio',
+              'VariabilityIndex', 'BaseflowRecessionK',
+              'BFI', 'BFI_90')
+x_max = c(1, 1, 5, 6, 550, 6, 60, 2, 1, 1, 1, 0.5, 1, 1)
+sig_limits = data.frame(signature, x_max)
 
 sig_map_plot_list <- list()
 for (sig in unique(hyset_sigs_centroid$signature)) {
+  
+  x_max_df = sig_limits[sig_limits$signature == sig, ]
+  upper_limit = x_max_df$x_max
+  
   p = ggplot() +
     geom_sf(data = conus, color = "white", fill = "grey") +  # Plot polygon boundaries, color by variable
     geom_sf(data = hyset_sigs_centroid[hyset_sigs_centroid$signature == sig, ],
-            aes(fill = prediction), shape = 21, color = "darkgrey", size = 3, alpha = 1) +
-    scale_fill_distiller(palette = "Spectral", direction = 1, name = NULL)+
+            aes(fill = prediction), shape = 21, color = "darkgrey", size = 2, alpha = 1) +
+    scale_fill_distiller(palette = "Spectral", direction = 1, name = NULL, limits = c(0, upper_limit)) +
     # scale_fill_gradient(low = "red", high = "blue4") +
     ggtitle(sig) +
-    theme_void()+
-    theme(
-      plot.title = element_text(size = 30, hjust = 0.5),  # Adjust title size and centering
-      legend.key.size = unit(2, "lines"),  # Adjust the size of the legend keys
-      legend.title = element_text(size = 24),  # Adjust the size of the legend title
-      legend.text = element_text(size = 24)# Adjust the size of the legend text
-    )
+    theme_void()
+    # theme(
+    #   plot.title = element_text(size = 30, hjust = 0.5),  # Adjust title size and centering
+    #   legend.key.size = unit(2, "lines"),  # Adjust the size of the legend keys
+    #   legend.title = element_text(size = 24),  # Adjust the size of the legend title
+    #   legend.text = element_text(size = 24)# Adjust the size of the legend text
+    # )
   sig_map_plot_list[[sig]] <- p
 }
-sig_map_final_plot <- plot_grid(plotlist = sig_map_plot_list, ncol = 2)  # Adjust ncol as needed
+sig_map_final_plot <- plot_grid(plotlist = sig_map_plot_list, ncol = 3)  # Adjust ncol as needed
 print(sig_map_final_plot)
+
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/predicted_signatures_map.png", width = 14, height = 14, dpi = 300,bg = "white")
 
 
 #### Performance Plotting; OLD VERSION ####
