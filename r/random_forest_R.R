@@ -27,36 +27,41 @@ sigs_final = sigs_all %>%
   as.data.frame() %>% 
   rename(RecessionParameters_T0 = RecessionParameters_c)
 
-camels_attribs_addor = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_addor18.csv", colClasses = c(gauge_id = "character"))
+# camels_attribs_addor = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_addor18.csv", colClasses = c(gauge_id = "character"))
 camels_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v2.csv", colClasses = c(gauge_id = "character"))
+
 # camels_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_attribs_v3.csv", colClasses = c(gauge_id = "character"))
 
 camels_new_attribs = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_new_attribs.csv", colClasses = c(gauge_id = "character"))
 camels_eco = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_ecoregions.csv", colClasses = c(gauge_id = "character"))
 
-# camels_caravan_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v2.csv", colClasses = c(gauge_id = "character"))
+camels_caravan_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v2.csv", colClasses = c(gauge_id = "character"))
 # camels_caravan_attribs_v3 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/camels_caravan_attribs_v3.csv", colClasses = c(gauge_id = "character"))
+
+hysets_caravan_attribs_v2 = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/inputs/hysets_caravan_attribs_v2.csv", colClasses = c(gauge_id = "character"))
 
 
 #### Adjust datasets for different runs ####
 
-# attribs_categorical = camels_attribs_addor %>% 
-#   select(gauge_id, dom_land_cover) %>% 
-#   left_join(camels_new_attribs %>% select(gauge_id, major_lith), by = "gauge_id") %>% 
-#   mutate(dom_land_cover = as.factor(dom_land_cover)) %>% 
-#   mutate(major_lith = as.factor(major_lith))
-# 
-# attribs_categorical_table <- data.table(attribs_categorical)
-# attribs_categorical_encoded <- one_hot(attribs_categorical_table, cols = c("dom_land_cover", "major_lith"))
+# rf_input_attribs = camels_attribs_v2 %>%
+#   # left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id") %>%
+#   select(-water_frac, -organic_frac) %>%
+#   select(-pet_mean, -p_mean) %>%
+#   select(-high_prec_freq, -high_prec_dur) %>%
+#   select(-soil_depth_pelletier) %>%
+#   select(-lai_max, -gvf_max)
+  # left_join(camels_eco, by = "gauge_id") %>%
+  # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>%
+  # filter(NA_L1KEY =="8  EASTERN TEMPERATE FORESTS" | NA_L1KEY == "5  NORTHERN FORESTS") %>% 
+  # select(-NA_L1KEY)
 
-rf_input_attribs = camels_attribs_v2 %>% 
-  # left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id") %>% 
-  select(-water_frac, -organic_frac) %>% 
-  left_join(camels_eco, by = "gauge_id") %>% 
+  
+
+# left_join(camels_eco, by = "gauge_id") %>% 
   # filter(NA_L1KEY =="6  NORTHWESTERN FORESTED MOUNTAINS") %>%
   # filter(NA_L1KEY =="8  EASTERN TEMPERATE FORESTS") %>%
-  filter(NA_L1KEY =="9  GREAT PLAINS") %>%
-  select(-NA_L1KEY)
+  # filter(NA_L1KEY =="9  GREAT PLAINS") %>%
+  # select(-NA_L1KEY)
   
   # left_join(camels_attribs_addor %>% select(gauge_id, dom_land_cover), by = "gauge_id") %>% 
   # left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma, major_lith), by = "gauge_id") %>% 
@@ -81,6 +86,16 @@ rf_input_attribs = camels_attribs_v2 %>%
   # select(-NA_L1KEY)
 
 
+# HYSETS #
+rf_input_attribs = camels_caravan_attribs_v2 %>%
+  select(-soc_th_sav) %>% 
+  select(-high_prec_freq, -high_prec_dur) %>% 
+  select(-p_mean, -pet_mean) %>% 
+  left_join(camels_new_attribs %>% select(gauge_id, giw_frac, geol_av_age_ma), by = "gauge_id")
+
+rf_input_attribs_new = hysets_caravan_attribs_v2 %>% 
+  select(-high_prec_freq, -high_prec_dur) %>% 
+  select(-p_mean, -pet_mean)
 
 #### Random forests, with cross validation for evaluation ####
 
@@ -92,10 +107,11 @@ sigs_list = c('EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality',
               'VariabilityIndex', 'BaseflowRecessionK',
               'BFI', 'BFI_90')
 
-# sigs_list = c('EventRR')
+# sigs_list = c('EventRR', 'BFI')
 
 rf_out_var_importance <- list()
 rf_out_r2 <- list()
+rf_sig_predictions <- list()
 
 for(sig in sigs_list){
   
@@ -160,14 +176,28 @@ for(sig in sigs_list){
   # append to larger output list, variable importance
   rf_out_var_importance[[sig]] <- var_importance_df
   
+  # Predict signature value for new samples
+  new_samples_df <- rf_input_attribs_new %>%
+    select(-gauge_id)
+
+  predictions <- predict(forest, new_samples_df)
+
+  # Store predictions in the list
+  rf_sig_predictions[[sig]] <- data.frame(gauge_id = rf_input_attribs_new$gauge_id, prediction = predictions, signature = sig)
+
+
   }
 
+all_sig_predictions = bind_rows(rf_sig_predictions)
 all_var_importance <- bind_rows(rf_out_var_importance)
 all_r2 = bind_rows(rf_out_r2) %>%
   pivot_longer(everything(), names_to = "signature", values_to = "r_squared")
 
-write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_importance.csv",
+write.csv(all_sig_predictions, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_predicted_signatures.csv",
           row.names = FALSE)
 
-write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_rsquared.csv",
+write.csv(all_var_importance, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_var_importance.csv",
+          row.names = FALSE)
+
+write.csv(all_r2, "E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_r_squared.csv",
           row.names = FALSE)
