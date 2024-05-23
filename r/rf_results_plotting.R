@@ -4,6 +4,8 @@ library(tidyverse)
 library(cowplot)
 
 # CAMELS attribute datasets
+
+### OLD VERSIONS ####
 # Addor 2018
 # rf_camels_addor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_var_importance.csv")
 # rf_camels_addor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_addor_r_squared.csv")
@@ -19,24 +21,24 @@ rf_camels_v2_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camel
 # rf_camels_v2_giw_frac_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_var_importance.csv")
 # rf_camels_v2_giw_frac_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_giw_frac_r_squared.csv")
 
-rf_camels_v2_new_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_var_importance.csv")
-rf_camels_v2_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_r_squared.csv")
+# rf_camels_v2_new_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_var_importance.csv")
+# rf_camels_v2_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_r_squared.csv")
 
 # version 2, but only in Northeastern forest region; with and without new attributes
-rf_camels_v2_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_var_importance.csv")
-rf_camels_v2_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_r_squared.csv")
-rf_camels_v2_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_var_importance.csv")
-rf_camels_v2_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_r_squared.csv")
-rf_camels_v2_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_var_importance.csv")
-rf_camels_v2_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_r_squared.csv")
-
-
-rf_camels_v2_new_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_var_importance.csv")
-rf_camels_v2_new_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_r_squared.csv")
-rf_camels_v2_new_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_var_importance.csv")
-rf_camels_v2_new_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_r_squared.csv")
-rf_camels_v2_new_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_var_importance.csv")
-rf_camels_v2_new_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_r_squared.csv")
+# rf_camels_v2_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_var_importance.csv")
+# rf_camels_v2_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_northwestfor_r_squared.csv")
+# rf_camels_v2_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_var_importance.csv")
+# rf_camels_v2_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_easttemp_r_squared.csv")
+# rf_camels_v2_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_var_importance.csv")
+# rf_camels_v2_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_greatplains_r_squared.csv")
+# 
+# 
+# rf_camels_v2_new_northfor_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_var_importance.csv")
+# rf_camels_v2_new_northfor_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_northwestfor_r_squared.csv")
+# rf_camels_v2_new_easttemp_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_var_importance.csv")
+# rf_camels_v2_new_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_easttemp_r_squared.csv")
+# rf_camels_v2_new_greatplains_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_var_importance.csv")
+# rf_camels_v2_new_greatplains_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v2_geol_giw_greatplains_r_squared.csv")
 
 # # version 3: removing variables with correlation greater than 0.7 before modeling
 # rf_camels_v3_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs/camels_v3_var_importance.csv")
@@ -64,6 +66,22 @@ rf_camels_new_east_imp = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outpu
 rf_caravan_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/caravan_geol_giw_r_squared.csv")
 rf_camels_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_aridity_geol_giw_r_squared.csv")
 rf_camels_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_r_squared.csv")
+
+r_comparison = rf_camels_new_r %>% 
+  rename(r_squared_camels_new = r_squared) %>% 
+  left_join(rf_caravan_new_r, by = "signature") %>% 
+  rename(r_squared_caravan = r_squared) %>% 
+  mutate(r_diff = r_squared_caravan - r_squared_camels_new)
+
+rf_easttemp_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_easttemp_northfor_r_squared.csv")
+rf_easttemp_new_r = read.csv("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/outputs_final/camels_easttemp_northfor_geol_giw_r_squared.csv")
+
+
+r_easttemp_comparison = rf_easttemp_r %>% 
+  rename(r_squared_camels = r_squared) %>% 
+  left_join(rf_easttemp_new_r, by = "signature") %>% 
+  rename(r_squared_new = r_squared) %>% 
+  mutate(r_diff = r_squared_new - r_squared_camels)
 
 #### Performance Plotting ####
 
