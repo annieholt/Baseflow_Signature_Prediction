@@ -350,7 +350,7 @@ signature = c('EventRR', 'TotalRR', 'RR_Seasonality', 'Recession_a_Seasonality',
               'First_Recession_Slope', 'Mid_Recession_Slope','EventRR_TotalRR_ratio',
               'VariabilityIndex', 'BaseflowRecessionK',
               'BFI', 'BFI_90')
-x_max = c(1, 1, 5, 6, 550, 6, 60, 2, 1, 1, 1, 0.5, 1, 1)
+x_max = c(1, 1, 10, 6, 550, 6, 60, 2, 1, 1, 1, 0.5, 1, 1)
 sig_limits = data.frame(signature, x_max)
 
 sig_map_plot_list <- list()
@@ -378,7 +378,7 @@ for (sig in unique(hyset_sigs_centroid$signature)) {
 sig_map_final_plot <- plot_grid(plotlist = sig_map_plot_list, ncol = 3)  # Adjust ncol as needed
 print(sig_map_final_plot)
 
-# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/predicted_signatures_map.png", width = 14, height = 14, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/predicted_signatures_map.png", width = 14, height = 14, dpi = 300,bg = "white")
 
 
 #### Performance Plotting; OLD VERSION ####
