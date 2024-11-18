@@ -137,8 +137,10 @@ ggplot(rf_r_all, aes(x = signature, y = r_squared, fill = attrib_version)) +
     title = NULL
   ) +
   scale_y_continuous(limits = c(0, 1)) +
-  scale_fill_manual(name = "RF Model Performance", values = c("camels" = "lightgrey", "camels_plusnew" = "grey40",
-                                                              "caravan_plusnew" = "darkgrey"))+
+  scale_fill_manual(name = "RF Model Performance", values = c("camels" = "lightgrey","camels_plusnew" = "grey40",
+                                                              "caravan_plusnew" = "darkgrey"),
+                    labels = c("camels" = "CAMELS", "camels_plusnew" = "CAMELS + New Attributes",
+                               "caravan_plusnew" = "Caravan + New Attributes"))+
   theme_minimal()+
   theme(
     plot.title = element_text(size = 24),
@@ -155,7 +157,8 @@ ggplot(rf_r_all, aes(x = signature, y = r_squared, fill = attrib_version)) +
   #                   values = c("green", "orange","blue"))
 
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/camels_caravan_r_squared.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/camels_caravan_r_squared.png", width = 10.5, height = 6, dpi = 300,bg = "white")
+ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/camels_caravan_r_squared_v2.png", width = 12, height = 6, dpi = 300,bg = "white")
 
 
 # trying slightly different aesthetics
@@ -378,7 +381,7 @@ for (sig in unique(hyset_sigs_centroid$signature)) {
 sig_map_final_plot <- plot_grid(plotlist = sig_map_plot_list, ncol = 3)  # Adjust ncol as needed
 print(sig_map_final_plot)
 
-ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/predicted_signatures_map.png", width = 14, height = 14, dpi = 300,bg = "white")
+# ggsave("E:/SDSU_GEOG/Thesis/Data/RandomForest_R/figures_final/predicted_signatures_map.png", width = 14, height = 14, dpi = 300,bg = "white")
 
 
 #### Performance Plotting; OLD VERSION ####
